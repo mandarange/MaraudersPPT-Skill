@@ -24,6 +24,24 @@ After Step 3 (Slide Mapping), scan every slide and classify:
 
 **Rule: 0% of content slides may be text-only (excluding code/table/chart slides).**
 
+### Empty Slide Detection (CRITICAL GUARD)
+
+During the visual coverage audit, also check for **empty content**:
+
+```
+FOR each slide:
+  IF slide.body_content is EMPTY AND slide.visual is NONE:
+    → CRITICAL: This slide will render as a blank page
+    → RECOVERY (in order):
+      1. Re-extract content from source MD section (distillation may have dropped it)
+      2. If source section was a plain paragraph → convert to keyword bullet NOW
+      3. If section is genuinely empty (heading-only) → merge with adjacent slide
+      4. If no merge target → generate AI image from section title + use title as body text
+    → NEVER allow a slide to render with only a title and blank body
+```
+
+This guard catches content lost during Step 2.9 distillation — especially **plain paragraphs** that were incorrectly treated as deletable content.
+
 ## 4.2 Image Prompt Derivation (from Keyword Extraction)
 
 The image prompt is derived directly from Step 2.3's `primary_keyword`:

@@ -67,17 +67,67 @@ If you exceed this budget, the slide has too much content.
 Split or move detail to appendix.
 ```
 
+## Content Preservation Guarantee
+
+> **Distillation = CONDENSE, never DELETE.**
+
+```
+HIERARCHY (in order of preference):
+  1. Condense → keyword fragments (ALWAYS try this first)
+  2. If too short to bullet → use as subtitle or caption text
+  3. If section has <15 words total → merge via SHORT-SECTION-MERGE (Step 2.8)
+  4. ABSOLUTE PROHIBITION: A section that had content in the source MD
+     must produce content on the slide. Zero-content slides = CRITICAL BUG.
+```
+
+### Paragraph → Bullet Conversion (MANDATORY for non-bullet source text)
+
+Plain paragraphs (text without `- `, `* `, `1. ` prefixes) are the #1 source of content loss.
+They MUST be converted to keyword bullets — NEVER silently dropped.
+
+```
+Source: "This project is licensed under the MIT License."
+  → • License: **MIT**
+
+Source: "Contributions are welcome. Please read the contributing guide before submitting PRs."
+  → • Contributions welcome — see guide
+
+Source: "Built with React, TypeScript, and Tailwind CSS for modern web development."
+  → • Stack: **React** + TypeScript + Tailwind
+
+Source: "For questions, contact team@example.com or open an issue on GitHub."
+  → • Contact: team@example.com / GitHub Issues
+```
+
+**Rule**: Every source paragraph produces **at least 1 bullet**. If the paragraph contains multiple distinct ideas, produce 1 bullet per idea (up to 3 max).
+
+### Short Section Handling
+
+Sections with ≤2 content lines (e.g., "License", "Contributing", "Contact"):
+
+| Source Lines | Action |
+|:------------:|--------|
+| 0 lines (heading only) | Merge heading into previous slide's footer/badge area |
+| 1 line | Merge as badge into previous slide, OR combine with other short sections into `icon-grid` |
+| 2 lines | Convert to 1–2 keyword bullets, merge into previous slide if <15 total words |
+
+**NEVER** create a standalone slide for ≤15 words of body content.
+
 ## Distillation Algorithm
 
 ```
 FOR each content_block:
-  1. Extract keywords (Step 2.3)
-  2. Rewrite as keyword fragments (noun-phrase, no verbs, no filler)
-  3. Count total slide words
-  4. IF > 50 words (EN) / 35 words (KR):
+  0. CLASSIFY content type: bullet list | paragraph | table | code | mixed
+  1. IF paragraph → Convert to keyword bullets FIRST (see Paragraph → Bullet above)
+  2. Extract keywords (Step 2.3)
+  3. Rewrite as keyword fragments (noun-phrase, no verbs, no filler)
+  4. Count total slide words
+  5. IF > 50 words (EN) / 35 words (KR):
      → Split into 2 slides, OR
      → Move supporting detail to appendix
-  5. VERIFY: presenter can read entire slide in ≤3 seconds
+  6. IF < 15 words AND section is short → Merge with adjacent (SHORT-SECTION-MERGE)
+  7. VERIFY: slide body is NOT empty after distillation (CRITICAL CHECK)
+  8. VERIFY: presenter can read entire slide in ≤3 seconds
 ```
 
 ## Anti-Patterns (ALL PROHIBITED)
@@ -90,3 +140,6 @@ FOR each content_block:
 | Prose paragraphs on slides | This is a document, not a slide | Extract 2-3 keyword bullets |
 | Repeating title content in body | Redundancy wastes space | Title = conclusion, body = evidence |
 | Filler words ("In order to", "It is important that") | Zero information value | Delete completely |
+| **Deleting paragraphs entirely** | **Content loss — empty slides** | **Convert to keyword bullets FIRST** |
+| **Empty slide body** | **Critical rendering failure** | **Re-extract from source, merge, or add visual** |
+| **1-line section as standalone slide** | **Wasted slide, poor flow** | **Merge via SHORT-SECTION-MERGE** |

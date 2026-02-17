@@ -13,7 +13,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.2"
+  version: "1.2.1"
   author: "MaraudersPPT"
 ---
 
@@ -104,7 +104,8 @@ In Cursor only: display Gemini Pro switch guidance, wait for `"continue"` / `"ok
 ### Step 2: Markdown Parsing
 
 - H1 → document title, H2 → section separation
-- Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, plain text
+- Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, **plain paragraphs**
+- **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets — NEVER silently deleted. Every paragraph produces ≥1 bullet.
 
 ### Step 2.3: Core Keyword Extraction (CRITICAL)
 
@@ -147,6 +148,7 @@ Auto-insert after title slide for 10+ slide decks. Content: 3–5 KPI metrics + 
 - **MAX-2-TEXT**: 3rd consecutive text slide must be visual
 - **FRONT-VISUAL**: ≥1 infographic in first 30% of slides
 - **AUTO-APPENDIX**: Detailed tables (6+ rows) → appendix; summaries in main body
+- **SHORT-SECTION-MERGE**: Sections with ≤2 content lines (e.g., "License: MIT") → merge into previous slide as a footer/badge, or combine multiple short sections into one `icon-grid` / `highlight-card` slide. NEVER create a standalone slide for ≤15 words of body content.
 
 ### Step 2.9: Content Distillation (SLIDES ARE NOT DOCUMENTS)
 
@@ -162,10 +164,43 @@ Auto-insert after title slide for 10+ slide decks. Content: 3–5 KPI metrics + 
 
 **Korean/CJK: 0.7x multiplier.** Bullet = keyword fragment, NOT sentence.
 
+**⚠️ CONTENT PRESERVATION GUARANTEE**: Distillation means CONDENSE, never DELETE.
+
+```
+HIERARCHY (in order):
+  1. Condense → keyword fragments (ALWAYS try this first)
+  2. If too short to bullet → use as subtitle or caption text
+  3. If section has <15 words total → merge via SHORT-SECTION-MERGE (Step 2.8)
+  4. ABSOLUTE PROHIBITION: A section that had content in the source MD
+     must produce content on the slide. Zero-content slides = CRITICAL BUG.
+```
+
+**Paragraph → Bullet Conversion** (for non-bullet source text):
+```
+Source paragraph: "This project is licensed under the MIT License."
+  → Bullet: • License: **MIT**
+
+Source paragraph: "Contributions are welcome. Please read the contributing guide."
+  → Bullet: • Contributions welcome — see guide
+
+Source paragraph: "Built with React, TypeScript, and Tailwind CSS for modern web development."
+  → Bullet: • Stack: **React** + TypeScript + Tailwind
+```
+
 ### Step 3: Slide Mapping
 
 - Determine layout per content block (23 types, see Layout Types below)
 - Max 2 topics/slide, max 4 bullets, max 5 table rows / 4 columns, max 12 code lines
+
+**Empty Slide Guard (MANDATORY after mapping):**
+```
+FOR each mapped slide:
+  IF slide.body_content is EMPTY or BLANK:
+    → CRITICAL ERROR — content was lost during distillation
+    → RECOVERY: Re-extract from source MD section
+    → IF source section also empty: merge with adjacent slide or remove slide entirely
+    → NEVER render a slide with title but no body/visual
+```
 
 ### Step 4: Image Generation (MANDATORY)
 
@@ -178,6 +213,7 @@ Auto-insert after title slide for 10+ slide decks. Content: 3–5 KPI metrics + 
 - On generation: `text-body` → `image-text` layout switch (condense text for 50% width)
 - On failure: SVG geometric placeholder (never text-only)
 - **0% text-only content slides allowed**
+- **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
 
 ### Step 5: HTML Slide Generation
 
@@ -363,6 +399,9 @@ Image prompt = `primary_keyword` → professional conceptual image. Resolution 1
 - [ ] Total slide text ≤ 50w EN / 35w KR
 - [ ] Bullets ≤ 3 (max 4), each ≤ 7 words — keyword fragments only
 - [ ] No full sentences, no filler words, CJK 0.7x applied
+- [ ] **ZERO empty slides** — every slide with a title has body content or visual
+- [ ] Plain paragraphs converted to keyword bullets (never deleted)
+- [ ] Short sections (≤2 lines) merged, not standalone slides
 
 ### Visual Coverage (Step 4)
 - [ ] **0% text-only content slides**
@@ -376,7 +415,7 @@ Image prompt = `primary_keyword` → professional conceptual image. Resolution 1
 
 ### Slide Flow
 - [ ] Executive summary present (10+ slides)
-- [ ] MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX rules applied
+- [ ] MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX, **SHORT-SECTION-MERGE** rules applied
 - [ ] CTA closing slide with Next Steps
 
 ### Charts
