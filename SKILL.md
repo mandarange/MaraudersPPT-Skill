@@ -107,7 +107,8 @@ All environments proceed immediately — no confirmation prompts.
 - H3 mapping: If H2 section has 2+ H3 children with substantial content → split into separate slides per H3. If H3 content is light → use as **bold sub-header** within parent slide's body area.
 - Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, **plain paragraphs**
 - **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets — NEVER silently deleted. Every paragraph produces ≥1 bullet.
-- **MARKDOWN SANITIZATION (MANDATORY)**: Remove markdown syntax tokens from display text before slide rendering: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (``` / `), and raw link syntax (`[text](url)` → display text). Token leakage in rendered slide text is a CRITICAL BUG.
+- **MARKDOWN SANITIZATION (MANDATORY)**: Run sanitization in **Step 2** (before Step 2.3 keyword extraction). Remove markdown syntax tokens from display text: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (``` / `), and raw link syntax (`[text](url)` → display text). Token leakage in rendered slide text is a CRITICAL BUG.
+- **PARAGRAPH DETECTION RULE**: Plain paragraph = text block without markdown list markers (`-`, `*`, `+`, `1.`), blockquote marker (`>`), or code fence (```).
 - **URL/LINK HANDLING**: URLs in source MD → preserve as display text (shortened if >80 chars). Never discard links silently. Group multiple URLs into a dedicated links slide or footer area.
 
 ### Step 2.3: Core Keyword Extraction (CRITICAL)
@@ -195,6 +196,15 @@ Source paragraph: "Built with React, TypeScript, and Tailwind CSS for modern web
 - Determine layout per content block (23 types, see Layout Types below)
 - Max 2 topics/slide, max 4 bullets, max 5 table rows / 4 columns, max 12 code lines
 
+**Layout decision order (deterministic):**
+1. AI Hint block (`[AI RULE]`, `[AI DECISION]`, `[AI NOTE]`, `[AI CONTEXT]`) → `ai-hint`
+2. Code fence block (```) → `code`
+3. Table block (`| ... |`) → `table`
+4. Blockquote (`> ...`) → `quote`
+5. Explicit list (`-`, `*`, `+`, `1.`) → `bullet-list`
+6. Paragraph/prose → `text-body`
+7. Has original image + text → `image-text`; has image only → `image`
+
 **Empty Slide Guard (MANDATORY after mapping):**
 ```
 FOR each mapped slide:
@@ -216,7 +226,7 @@ FOR each mapped slide:
 - On generation: `text-body` → `image-text` layout switch (condense text for 50% width)
 - **0% text-only content slides allowed**
 - **HARD GATE**: If any non-visual content slide still has no visual after all generation retries, FAIL pipeline and STOP before output generation.
-- **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
+- **EMPTY SLIDE CATCH (ordered recovery)**: If a slide reaches Step 4 with NO body content AND no visual, recover in this order: (1) re-extract source section, (2) convert paragraph to keyword bullet, (3) merge with adjacent slide if still empty, (4) generate image from section title + add section title as single-line body text.
 
 **Generation methods (3 priorities):**
 1. **Native image gen** (Cursor / Antigravity — built-in agent tool) or **background `task()`** (OpenCode) — AI-quality photorealistic images, saved to `assets/` directly
@@ -264,9 +274,9 @@ HARD GATES (must all pass):
   3) visual_coverage == 100%
 
 IF any gate fails:
-  → pipeline_status = "FAILED"
-  → do NOT write .pptx/.pdf
+  → pipeline_status = "FAILED"; do NOT write .pptx/.pdf
   → output blocking error report with offending slide numbers
+Metric scope: content_slides = all slides except `title`, `section-divider`, `appendix-divider`, `closing`; text_only_slide_ratio = text_only_content_slides / total_content_slides * 100; truncated_sentence_ratio = slides_with_ellipsis_in_title_or_body_or_caption / total_content_slides * 100
 ```
 
 ```

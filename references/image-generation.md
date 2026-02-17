@@ -24,6 +24,10 @@ After Step 3 (Slide Mapping), scan every slide and classify:
 
 **Rule: 0% of content slides may be text-only (excluding code/table/chart slides).**
 
+Metric scope for this rule:
+- `content_slides` = all slides except `title`, `section-divider`, `appendix-divider`, `closing`
+- `text_only_content_slides` = content slides with no image/chart/table/code/infographic visual
+
 ### Empty Slide Detection (CRITICAL GUARD)
 
 During the visual coverage audit, also check for **empty content**:

@@ -130,6 +130,17 @@ FOR each content_block:
   8. VERIFY: presenter can read entire slide in ≤3 seconds
 ```
 
+### Paragraph → Bullet Conversion Algorithm (Deterministic)
+
+```
+FOR each plain paragraph:
+  1. Extract up to 3 key ideas (claim, metric, action)
+  2. Convert each idea to one keyword bullet
+  3. Enforce ≤7 words per bullet (≤5 for image-text)
+  4. Preserve core nouns/metrics; remove filler modifiers
+  5. Verify no markdown tokens remain (`#`, backticks, raw [text](url))
+```
+
 ## Ellipsis Truncation Prohibition (CRITICAL)
 
 > **NEVER truncate text with `...` (ellipsis).** This is content destruction, not distillation.

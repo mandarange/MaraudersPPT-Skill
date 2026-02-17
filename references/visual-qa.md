@@ -66,6 +66,11 @@ Fix issues and re-run QA on affected slides only.
 
 Compute the following metrics before final completion:
 
+Scope definition:
+- `content_slides` = all slides except `title`, `section-divider`, `appendix-divider`, `closing`
+- `text_only_content_slides` = content slides with no image/chart/table/code/infographic visual
+- `slides_with_ellipsis` = slides with `...` in title/body/caption text (exclude chart labels, slide numbers)
+
 | Metric | Formula | Target | Hard Fail Condition |
 |-------|---------|--------|---------------------|
 | `text_only_slide_ratio` | `text_only_content_slides / total_content_slides * 100` | `0%` | `> 0%` |
