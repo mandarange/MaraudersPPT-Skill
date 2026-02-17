@@ -13,7 +13,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.2.2"
+  version: "1.2.3"
   author: "MaraudersPPT"
 ---
 
@@ -90,7 +90,8 @@ environment:        "OpenCode" | "Cursor"
 | | OpenCode | Cursor / Other |
 |--|----------|----------------|
 | `task()` available? | ✅ | ❌ |
-| Image generation | Background (Gemini Pro) | Main thread |
+| NanoBanana Pro? | Check | ✅ (if installed) |
+| Image generation | Gemini via `task()` (background) | NanoBanana Pro `/generate` (preferred) |
 | Model switch? | No | **Yes — 1x confirmation** |
 
 In Cursor only: display Gemini Pro switch guidance, wait for `"continue"` / `"ok"` / `"yes"`, then execute Steps 1–8 without interruption.
@@ -215,7 +216,7 @@ FOR each mapped slide:
 - **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
 
 **Generation methods (3 priorities):**
-1. **Gemini image gen** — via `task(run_in_background=true)` in OpenCode, or direct in Cursor
+1. **NanoBanana Pro** `/generate` (Cursor/Gemini CLI) or **Gemini via `task()`** (OpenCode) — AI-quality photorealistic images
 2. **HTML concept visual + Playwright screenshot** — ALWAYS WORKS, no external API needed. Create styled HTML (gradient + abstract shapes + keyword) → screenshot as 1920×1080 PNG
 3. **SVG geometric placeholder + Sharp** — simplest fallback, minimal visual anchor
 
@@ -375,7 +376,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 | Target | Method |
 |--------|--------|
-| Slides without visuals | Priority 1: Gemini → Priority 2: HTML concept visual + Playwright → Priority 3: SVG + Sharp |
+| Slides without visuals | Priority 1: NanoBanana Pro (Cursor) / Gemini task (OpenCode) → Priority 2: HTML concept + Playwright → Priority 3: SVG + Sharp |
 | Charts/infographics | HTML templates (`templates/charts/`) → Playwright screenshot |
 | Diagrams/flowcharts | HTML/SVG |
 | Original MD images | Copy to `assets/`, reference via absolute path in HTML |

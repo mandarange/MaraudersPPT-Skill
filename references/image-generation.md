@@ -140,9 +140,39 @@ In the HTML slide file, reference images using **absolute file paths**:
 
 ## 4.6 Generation Methods (3 paths, in priority order)
 
-### Priority 1: Gemini Image Generation (AI-quality images)
+### Priority 1A: NanoBanana Pro (Cursor / Gemini CLI environments)
 
-**OpenCode** — use `task()` to delegate image generation to a Gemini model:
+> **NanoBanana Pro** is a Gemini CLI extension that generates photorealistic images using Gemini 2.5 Flash Image model. It saves output to `./nanobanana-output/` automatically.
+
+**Installation** (one-time):
+```bash
+gemini extensions install https://github.com/gemini-cli-extensions/nanobanana
+```
+
+**Generation** (per slide):
+```bash
+/generate "{image_prompt_from_4.2}" --styles="photorealistic" --count=1
+```
+
+**Copy to assets pipeline**:
+```bash
+# NanoBanana saves to ./nanobanana-output/*.png
+# Copy the generated file to the slide assets directory
+GENERATED=$(ls -t ./nanobanana-output/*.png | head -1)
+cp "$GENERATED" "{output_dir}/assets/ai-img-{NN}-{label}.png"
+```
+
+**Batch generation** (fire all slides, then collect):
+```
+FOR EACH slide needing an image:
+  /generate "{slide.image_prompt}" --styles="photorealistic" --count=1
+  → cp ./nanobanana-output/*.png → {output_dir}/assets/ai-img-{NN}-{label}.png
+  → Verify: ls -la {output_path} (file exists, size > 0)
+```
+
+### Priority 1B: Gemini via task() (OpenCode environments)
+
+**OpenCode** — use `task()` to delegate image generation to a Gemini model in background:
 
 ```
 For EACH slide needing an image:
@@ -159,7 +189,7 @@ For EACH slide needing an image:
   )
 ```
 
-**Cursor / Non-OpenCode** — if the active model (Gemini Pro) supports image generation, generate directly in the main thread. If not, fall to Priority 2.
+**Note**: If NanoBanana Pro is also available in an OpenCode environment, prefer Priority 1A.
 
 ### Priority 2: HTML Concept Visual + Playwright Screenshot (ALWAYS WORKS)
 
@@ -286,11 +316,17 @@ async function generatePlaceholder(keyword, outputPath) {
 
 | Environment | Priority 1 | Priority 2 | Priority 3 |
 |-------------|-----------|-----------|-----------|
+| **Cursor (with NanoBanana)** | NanoBanana Pro `/generate` → copy to `assets/` | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
 | **OpenCode** | `task(run_in_background=true)` → Gemini generates images in parallel | HTML concept visual + Playwright screenshot (if task fails) | SVG + Sharp placeholder |
-| **Cursor (Gemini model)** | Direct Gemini image generation in main thread | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
-| **Cursor (non-Gemini)** | Skip (no Gemini available) | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
+| **Cursor (no NanoBanana)** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
+| **No Gemini available** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
 
-**IMPORTANT**: In non-Gemini environments, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
+**IMPORTANT**: In non-Gemini/non-NanoBanana environments, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
+
+**Environment detection order:**
+1. Check if `/generate` command is available (NanoBanana Pro) → use Priority 1A
+2. Check if `task()` API is available (OpenCode) → use Priority 1B
+3. Neither available → skip to Priority 2 (HTML concept visual)
 
 ## 4.8 Image Quality Requirements
 
@@ -308,7 +344,14 @@ async function generatePlaceholder(keyword, outputPath) {
 
 ```
 FOR each slide needing an image:
-  TRY Priority 1 (Gemini)
+  TRY Priority 1A (NanoBanana Pro — if available)
+    → /generate "{prompt}" --styles="photorealistic" --count=1
+    → cp ./nanobanana-output/*.png → {output_dir}/assets/ai-img-{NN}-{label}.png
+    → IF success: verify file, continue
+    → IF fail: log warning, try Priority 1B or Priority 2
+
+  TRY Priority 1B (Gemini via task() — if OpenCode)
+    → task(run_in_background=true, ...) 
     → IF success: save PNG, continue
     → IF fail: log warning, try Priority 2
 
@@ -328,8 +371,9 @@ FOR each slide needing an image:
 
 **Log format for diagnostics:**
 ```
-[IMG-OK]  Slide 3: ai-img-03-architecture.png (Priority 1: Gemini, 245KB)
-[IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 2: HTML concept, 89KB)
-[IMG-WARN] Slide 7: ai-img-07-deployment.png (Priority 3: SVG placeholder, 12KB)
+[IMG-OK]  Slide 3: ai-img-03-architecture.png (Priority 1A: NanoBanana, 312KB)
+[IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 1B: Gemini task, 245KB)
+[IMG-OK]  Slide 7: ai-img-07-deployment.png (Priority 2: HTML concept, 89KB)
+[IMG-WARN] Slide 8: ai-img-08-security.png (Priority 3: SVG placeholder, 12KB)
 [IMG-FAIL] Slide 9: generation failed — title-only slide (CRITICAL)
 ```
