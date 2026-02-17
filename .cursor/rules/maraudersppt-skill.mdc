@@ -1,21 +1,6 @@
 ---
-name: MaraudersPPT-Skill
-description: >
-  Converts Markdown documents into presentation-quality PDF files.
-  Requires explicit "MaraudersMD2PPT" invocation - never self-activates.
-  Phase-based pipeline with Semantic Analysis, Narrative Architecture, and Visual Blueprint.
-  Maps heading hierarchies, tables, code blocks, images, and AI Hint blocks to 23 slide
-  layout types. Generates AI photorealistic images via native image generation (Cursor)
-  or background task delegation (OpenCode). Uses Section Cards and narrative roles to drive
-  action titles, accent words, visual coverage, and dual-output routing. Fully supports Korean/CJK
-  text with Pretendard font.
-license: MIT
-compatibility:
-  os: [macos, linux, windows]
-  requires: [node, python3]
-metadata:
-  version: "2.0.0"
-  author: "MaraudersPPT"
+description: "Converts Markdown documents into presentation-quality PDF files. Requires explicit 'MaraudersMD2PPT' invocation — never self-activates."
+alwaysApply: false
 ---
 
 # MaraudersPPT Skill
@@ -26,8 +11,6 @@ Converts Markdown -> presentation-quality PDF. For detailed design specs see `do
 |-----------|----------|
 | [Insight Extraction](references/insight-extraction.md) | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm |
 | [Content Distillation](references/content-distillation.md) | Slide text limits, bullet rules, distillation algorithm |
-| [Cognitive Layout](references/cognitive-layout.md) | Eye-scanning patterns, Gestalt principles, pre-attentive attributes, spacing system |
-| [SVG Components](references/svg-components.md) | Inline SVG library: charts, icons, connectors, progress arcs, sparklines |
 | [Image Generation](references/image-generation.md) | 3-priority image system, Image Manifest cache, prompt derivation, layout adaptation |
 | [Layout Integrity](references/layout-integrity.md) | Safe areas, font metrics, verification checklist, golden rule |
 | [Parallel Execution](references/parallel-execution.md) | 6-wave architecture, parallel render strategy, performance gains |
@@ -292,8 +275,6 @@ Routing is mandatory and audited in `.coverage-report.json`.
 
 #### Phase 3.1 Per-Slide Visual Blueprint
 
-> Eye-scanning rules, Gestalt principles, and spacing constraints -> [references/cognitive-layout.md](references/cognitive-layout.md)
-
 Each planned slide gets one visual blueprint before rendering.
 
 ```yaml
@@ -355,31 +336,18 @@ Priority 2: HTML code generation -> charts (templates/charts/), diagrams, compos
 Priority 3: LLM image generation -> insight-based prompt -> Native gen (Cursor) / task() (OpenCode) / HTML concept fallback
 ```
 
-#### Phase 4.2 Image Manifest (`assets/image-manifest.json`)
+#### Phase 4.2 Image Manifest (`.image-manifest.json`)
 
-Stored inside `assets/` — single source of truth for every image file.
-
-| Field | Purpose |
-|-------|---------|
-| `type` | `ai-generated` / `chart` / `original-md` / `html-concept` |
-| `prompt` | Exact prompt used (AI images only) — enables reproducibility |
-| `generator` | Which tool produced the image (`cursor-native`, `opencode-task`, `playwright-chart`, `source-copy`, …) |
-| `visual_intent` | Visual intent from Phase 3 VisualBlueprint |
-| `width` / `height` / `file_size_bytes` | Quality verification fields |
-| `content_hash` | Cache key for AI images: `sha256(prompt + generator_id + render_params)` |
-| `data_hash` | Cache key for charts: `sha256(data + chart_type + template_version)` |
-
-- Skip regeneration on cache hit (`hash matches AND file exists AND file_size_bytes > 0`)
-- Full schema + cache logic -> [references/image-generation.md](references/image-generation.md)
+- Cache generated images for reuse across re-runs
+- Hash-based: `content_hash` (AI images), `data_hash` (charts)
+- Skip regeneration on cache hit (unless user explicitly requests)
+- Full rules -> [references/image-generation.md](references/image-generation.md)
 
 #### Phase 4.3 HTML Slide Generation
-
-> Inline SVG patterns (charts, icons, connectors, sparklines) -> [references/svg-components.md](references/svg-components.md)
 
 - Individual HTML per slide, CSS inline, 16:9 at 1920x1080px
 - Composition templates for structured layouts
 - Pretendard font with fallback chain
-- Use SVG components for: curved shapes, arrow markers, trend lines, crisp icons at any scale
 
 #### Phase 4.4 PDF Rendering
 
@@ -419,12 +387,9 @@ Metric scope: content_slides = all slides except `title`, `section-divider`, `ap
 {original_filename}_slides/
 ├── v{M}.{m}_{original_filename}.pdf              ← Primary output (deck only)
 ├── v{M}.{m}_{original_filename}_appendix.pdf     ← Appendix
-├── .coverage-report.json                          ← Content routing audit (deck/appendix/notes/cut)
-└── assets/                                        ← All image files + manifest
-    ├── image-manifest.json                        ← Image cache + metadata for every asset
-    ├── md-img-{NN}-{slug}.png                    ← Priority 1: copied from source MD
-    ├── chart-{NN}-{slug}.png                     ← Priority 2: chart/diagram screenshots
-    └── ai-img-{NN}-{label}.png                   ← Priority 3: LLM-generated images
+├── .image-manifest.json                           ← Image cache
+├── .coverage-report.json                          ← Content routing audit
+└── assets/                                        ← Generated charts/images
 ```
 
 #### Phase 5.4 Diagnostic Report (MANDATORY in every completion message)
@@ -562,7 +527,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 **Pipeline**: Generate PNG -> save to `{output_dir}/assets/` -> reference in HTML via `<img src="/absolute/path/...">` -> Playwright renders HTML slides to PDF with all images embedded.
 
-**Image Manifest rule**: Every generated visual writes metadata into `assets/image-manifest.json` (`type`, `prompt`, `generator`, `visual_intent`, `content_hash`, `data_hash`, `width`, `height`, `file_size_bytes`, `created_at`). Cache hit reuses existing file unless user explicitly requests refresh.
+**Image Manifest rule**: Every generated visual writes metadata into `.image-manifest.json` (`content_hash`, `data_hash`, file path, timestamp). Cache hit reuses existing file unless user explicitly requests refresh.
 
 ---
 
@@ -608,16 +573,12 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 - [ ] Every slide has VisualBlueprint (eye_flow, composition, image_strategy)
 - [ ] Deck Rhythm validated (density variation, mood arc)
 - [ ] Visual Intent -> Layout Recipe mapping applied
-- [ ] Eye-scanning pattern (Z/F/Center) assigned per slide
-- [ ] Gestalt rules applied: proximity, similarity, continuity, figure-ground
-- [ ] Pre-attentive attribute (color, size, position) used for primary focus element
 
 ### Phase 4 (Rendering)
 - [ ] Image priority respected: Original MD -> HTML code -> LLM gen
 - [ ] Image Manifest populated and cached
 - [ ] 0% text-only content slides
 - [ ] Layout adapted on image addition, text condensed
-- [ ] SVG used for: donut arcs, sparklines, arrow connectors, crisp icons
 
 ### Phase 5 (Verification)
 - [ ] Hard gates: text_only=0%, token_leakage=0, coverage=100%
