@@ -140,9 +140,9 @@ In the HTML slide file, reference images using **absolute file paths**:
 
 ## 4.6 Generation Methods (3 paths, in priority order)
 
-### Priority 1A: Cursor Native Image Generation
+### Priority 1A: Native Image Generation (Cursor / Antigravity)
 
-> **Cursor 2.4+** has a built-in image generation agent tool (powered by Google Nano Banana Pro). The agent generates images when you describe them — no CLI commands, no model switching, no installation required.
+> **Cursor 2.4+** and **Google Antigravity** have built-in image generation agent tools (powered by Nano Banana Pro / Gemini 3 Pro Image). The agent generates images when you describe them — no CLI commands, no model switching, no installation required.
 
 **How it works:**
 1. The skill describes the desired image in natural language
@@ -169,7 +169,7 @@ FOR EACH slide needing an image:
 ```
 
 **Key advantages over CLI approach:**
-- Zero setup — works out of the box in Cursor 2.4+
+- Zero setup — works out of the box in Cursor 2.4+ and Google Antigravity
 - No model switching — image gen works regardless of selected chat model
 - Saves directly to project `assets/` folder
 - Inline preview in chat for immediate visual verification
@@ -320,14 +320,14 @@ async function generatePlaceholder(keyword, outputPath) {
 
 | Environment | Priority 1 | Priority 2 | Priority 3 |
 |-------------|-----------|-----------|-----------|
-| **Cursor 2.4+** | Native image gen (built-in agent tool) → saves to `assets/` | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
+| **Cursor 2.4+ / Antigravity** | Native image gen (built-in agent tool) → saves to `assets/` | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
 | **OpenCode** | `task(run_in_background=true)` → background agent generates images | HTML concept visual + Playwright screenshot (if task fails) | SVG + Sharp placeholder |
 | **Other / No image gen** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
 
 **IMPORTANT**: In environments without native image gen or `task()`, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
 
 **Environment detection order:**
-1. Cursor environment → use native image generation (Priority 1A)
+1. Cursor / Antigravity environment → use native image generation (Priority 1A)
 2. OpenCode environment (`task()` available) → use background delegation (Priority 1B)
 3. Neither available → skip to Priority 2 (HTML concept visual)
 

@@ -70,12 +70,12 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 
 | Environment | AI Image Generation | PPT Conversion | Model Switching |
 |-------------|-------------------|----------------|-----------------|
-| **Cursor 2.4+** | Native image gen (built-in agent tool) | User's selected model | **Not required** |
+| **Cursor 2.4+ / Antigravity** | Native image gen (built-in agent tool) | User's selected model | **Not required** |
 | **OpenCode** | Background task via `task()` | User's selected model | **Not required** |
 
-- **Cursor**: Uses built-in image generation agent tool (powered by Nano Banana Pro) — no model switch needed
+- **Cursor / Antigravity**: Uses built-in image generation agent tool (powered by Nano Banana Pro) — no model switch needed
 - **OpenCode**: Image generation runs as a background task via `task(run_in_background=true)`
-- **Both environments**: Pipeline proceeds immediately with zero confirmation prompts
+- **All environments**: Pipeline proceeds immediately with zero confirmation prompts
 
 ---
 
@@ -133,7 +133,7 @@ html = render_chart("bar_chart", [
 | `pptxgenjs` | PowerPoint file generation | **Required** |
 | `playwright` | HTML rendering / PDF generation / chart screenshots | **Required** |
 | `sharp` | Image post-processing (rasterization) | **Required** |
-| Cursor native image gen | Built-in agent tool for AI image generation (Cursor 2.4+) | Cursor only |
+| Native image gen | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
 | `task()` background gen | OpenCode image generation via background agent | OpenCode only |
 
 ---

@@ -87,14 +87,14 @@ environment:        "OpenCode" | "Cursor"
 
 ### Step 0: Environment Detection
 
-| | OpenCode | Cursor / Other |
-|--|----------|----------------|
+| | OpenCode | Cursor / Antigravity |
+|--|----------|----------------------|
 | `task()` available? | ✅ | ❌ |
 | Native image gen? | ❌ | ✅ (built-in agent tool) |
-| Image generation | Background task via `task()` | Cursor native image generation |
+| Image generation | Background task via `task()` | Native image gen (Nano Banana Pro) |
 | Model switch? | No | **No** |
 
-Both environments proceed immediately — no confirmation prompts.
+All environments proceed immediately — no confirmation prompts.
 
 ### Step 1: Input Reception
 
@@ -216,7 +216,7 @@ FOR each mapped slide:
 - **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
 
 **Generation methods (3 priorities):**
-1. **Cursor native image gen** (built-in agent tool) or **background `task()`** (OpenCode) — AI-quality photorealistic images, saved to `assets/` directly
+1. **Native image gen** (Cursor / Antigravity — built-in agent tool) or **background `task()`** (OpenCode) — AI-quality photorealistic images, saved to `assets/` directly
 2. **HTML concept visual + Playwright screenshot** — ALWAYS WORKS, no external API needed. Create styled HTML (gradient + abstract shapes + keyword) → screenshot as 1920×1080 PNG
 3. **SVG geometric placeholder + Sharp** — simplest fallback, minimal visual anchor
 
@@ -376,7 +376,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 | Target | Method |
 |--------|--------|
-| Slides without visuals | Priority 1: Cursor native image gen / OpenCode background task → Priority 2: HTML concept + Playwright → Priority 3: SVG + Sharp |
+| Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) → Priority 2: HTML concept + Playwright → Priority 3: SVG + Sharp |
 | Charts/infographics | HTML templates (`templates/charts/`) → Playwright screenshot |
 | Diagrams/flowcharts | HTML/SVG |
 | Original MD images | Copy to `assets/`, reference via absolute path in HTML |
@@ -392,7 +392,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 | Dependency | Role | Required |
 |-----------|------|----------|
 | `document-skills/pptx` | html2pptx engine, PptxGenJS API | **Required** |
-| Cursor native image gen | Built-in agent tool (powered by Nano Banana Pro) | Cursor only |
+| Native image gen | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
 | `task()` background gen | OpenCode image generation via background agent | OpenCode only |
 | `pptxgenjs` | PowerPoint generation | **Required** (npm) |
 | `playwright` | HTML rendering / screenshots | **Required** (npm) |
