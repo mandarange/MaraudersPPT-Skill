@@ -13,7 +13,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
   author: "MaraudersPPT"
 ---
 
@@ -211,9 +211,22 @@ FOR each mapped slide:
 - `text-body`, `bullet-list`, `ai-hint`, `quote`, `checklist` without visuals → **MUST generate** ❌→✅
 - Prompt derived from `primary_keyword` → professional conceptual image
 - On generation: `text-body` → `image-text` layout switch (condense text for 50% width)
-- On failure: SVG geometric placeholder (never text-only)
 - **0% text-only content slides allowed**
 - **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
+
+**Generation methods (3 priorities):**
+1. **Gemini image gen** — via `task(run_in_background=true)` in OpenCode, or direct in Cursor
+2. **HTML concept visual + Playwright screenshot** — ALWAYS WORKS, no external API needed. Create styled HTML (gradient + abstract shapes + keyword) → screenshot as 1920×1080 PNG
+3. **SVG geometric placeholder + Sharp** — simplest fallback, minimal visual anchor
+
+**Image save & reference pipeline:**
+```
+1. mkdir -p "{output_dir}/assets"
+2. Save PNG: {output_dir}/assets/ai-img-{NN}-{label}.png
+3. In HTML slide: <img src="/absolute/path/to/assets/ai-img-01.png">
+4. html2pptx.js reads <img src> → PptxGenJS addImage({ path: ... })
+5. Verify: ls -la {output_path} (file exists, size > 0)
+```
 
 ### Step 5: HTML Slide Generation
 
@@ -362,11 +375,14 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 | Target | Method |
 |--------|--------|
-| Slides without visuals | AI generation (NanoBanana Pro → Gemini API fallback) |
-| Charts/infographics | HTML templates (`templates/charts/`) |
+| Slides without visuals | Priority 1: Gemini → Priority 2: HTML concept visual + Playwright → Priority 3: SVG + Sharp |
+| Charts/infographics | HTML templates (`templates/charts/`) → Playwright screenshot |
 | Diagrams/flowcharts | HTML/SVG |
+| Original MD images | Copy to `assets/`, reference via absolute path in HTML |
 
-Image prompt = `primary_keyword` → professional conceptual image. Resolution 1920×1080, PNG, <5MB, no text/logos/watermarks.
+**Pipeline**: Generate PNG → save to `{output_dir}/assets/` → reference in HTML via `<img src="/absolute/path/...">` → html2pptx.js embeds via PptxGenJS `addImage({ path })` → PPTX and PDF both render the image.
+
+**Priority 2 (HTML concept visual)** is the most reliable — works in ANY environment with only Playwright (already a dependency). It generates a styled gradient background with abstract shapes and the slide's keyword, then screenshots it as a 1920×1080 PNG.
 
 ---
 

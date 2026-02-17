@@ -85,27 +85,214 @@ When a generated image is added to a previously text-only slide:
 
 **CRITICAL**: When layout switches to `image-text`, the text content MUST be condensed to fit the reduced text area (50–60% of slide width). Apply content distillation limits for `image-text` layout.
 
-## 4.5 Generation Paths
+## 4.5 Image Save & Reference Pipeline (CRITICAL)
+
+> **This is the pipeline that connects generated images to the final PPTX/PDF.**
+> If this is broken, images won't appear even if generation succeeds.
+
+### Save Location
+
+All generated images MUST be saved to:
+```
+{output_dir}/assets/ai-img-{NN}-{label}.png
+
+Example:
+  docs/prd_pptx/assets/ai-img-01-architecture.png
+  docs/prd_pptx/assets/ai-img-02-performance.png
+```
+
+Create the `assets/` directory before generating any images:
+```bash
+mkdir -p "{output_dir}/assets"
+```
+
+### HTML Reference (how html2pptx.js picks up images)
+
+In the HTML slide file, reference images using **absolute file paths**:
+
+```html
+<!-- CORRECT — absolute path (html2pptx.js resolves file:// URIs) -->
+<img src="/absolute/path/to/docs/prd_pptx/assets/ai-img-01-architecture.png"
+     style="width: 460pt; height: 340pt; object-fit: cover;">
+
+<!-- ALSO CORRECT — file:// URI (html2pptx.js strips file:// prefix) -->
+<img src="file:///absolute/path/to/docs/prd_pptx/assets/ai-img-01-architecture.png"
+     style="width: 460pt; height: 340pt; object-fit: cover;">
+```
+
+**How it works internally**:
+1. Playwright renders the HTML slide → `getBoundingClientRect()` gets image position/size
+2. `el.src` captures the full path (Playwright resolves relative paths to `file://` URIs)
+3. html2pptx.js strips `file://` prefix → passes to PptxGenJS `addImage({ path: ... })`
+4. PptxGenJS reads the PNG from disk → embeds into PPTX
+
+**For PDF generation**: Playwright's `page.pdf()` also resolves local `<img src>` paths correctly when rendering HTML files from disk.
+
+### Image Sizing for Slide Layouts
+
+| Layout | Image Dimensions (pt) | CSS Style |
+|--------|----------------------|-----------|
+| `image-text` (left 50%) | 460 × 340 | `width: 460pt; height: 340pt; object-fit: cover` |
+| `title` (background 10%) | 720 × 405 | `width: 100%; height: 100%; opacity: 0.10` |
+| `closing` (background 10%) | 720 × 405 | `width: 100%; height: 100%; opacity: 0.10` |
+| `ai-hint` (top 30%) | 720 × 120 | `width: 100%; height: 120pt; object-fit: cover` |
+| `quote` (background 15%) | 720 × 405 | `width: 100%; height: 100%; opacity: 0.15` |
+
+## 4.6 Generation Methods (3 paths, in priority order)
+
+### Priority 1: Gemini Image Generation (AI-quality images)
+
+**OpenCode** — use `task()` to delegate image generation to a Gemini model:
 
 ```
-Priority 1 — NanoBanana Pro (Gemini CLI Extension):
-  CLI:  /generate "prompt" --count=1 --styles="photorealistic" --preview
-  Output: ./nanobanana-output/*.png
-
-Priority 2 — Gemini API Direct (fallback):
-  Model:    gemini-2.5-flash-image
-  Endpoint: POST /v1beta/models/gemini-2.5-flash-image:generateContent
-  Response: base64 PNG inline data → decode → save to file
+For EACH slide needing an image:
+  task(
+    run_in_background=true,
+    category="quick",
+    prompt="Generate a photorealistic image for a presentation slide.
+            Concept: {image_prompt_from_4.2}
+            Save the image to: {output_dir}/assets/ai-img-{NN}-{label}.png
+            Requirements: 1920x1080px, PNG, professional corporate style,
+            clean background, NO text/logos/watermarks.
+            Use Gemini image generation or create a high-quality HTML visual
+            and screenshot it with Playwright."
+  )
 ```
 
-## 4.6 Environment-Specific Execution
+**Cursor / Non-OpenCode** — if the active model (Gemini Pro) supports image generation, generate directly in the main thread. If not, fall to Priority 2.
 
-| Environment | Execution Method |
-|-------------|-----------------|
-| OpenCode | `task(run_in_background=true)` → Gemini Pro background task — fire ALL image tasks in parallel |
-| Cursor | Direct execution in main thread (full Gemini Pro model) — sequential |
+### Priority 2: HTML Concept Visual + Playwright Screenshot (ALWAYS WORKS)
 
-## 4.7 Image Quality Requirements
+> **This is the reliable fallback that works in ANY environment with zero external dependencies.**
+> Generate a styled HTML visual and screenshot it with Playwright.
+
+Create a Node.js script that generates a concept visual:
+
+```javascript
+// generate-concept-image.js
+const { chromium } = require('playwright');
+const path = require('path');
+
+async function generateConceptImage(keyword, label, outputDir, slideIndex) {
+  // Color palette derived from slide design
+  const colors = [
+    { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '#fff' },
+    { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: '#fff' },
+    { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: '#fff' },
+    { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', text: '#fff' },
+    { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', text: '#333' },
+    { bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', text: '#333' },
+  ];
+  const palette = colors[slideIndex % colors.length];
+
+  const html = `<!DOCTYPE html>
+<html><head><style>
+  body { margin:0; width:1920px; height:1080px; display:flex;
+         align-items:center; justify-content:center;
+         background:${palette.bg}; font-family:sans-serif; overflow:hidden; }
+  .container { text-align:center; padding:80px; }
+  .icon { font-size:200px; opacity:0.15; margin-bottom:40px; }
+  .keyword { font-size:48px; font-weight:700; color:${palette.text};
+             opacity:0.9; letter-spacing:2px; text-transform:uppercase;
+             max-width:900px; line-height:1.3; }
+  .shapes { position:absolute; top:0; left:0; width:100%; height:100%;
+            pointer-events:none; overflow:hidden; }
+  .circle { position:absolute; border-radius:50%; opacity:0.08;
+            background:${palette.text}; }
+  .c1 { width:400px; height:400px; top:-100px; right:-100px; }
+  .c2 { width:300px; height:300px; bottom:-80px; left:-80px; }
+  .c3 { width:200px; height:200px; top:40%; left:10%; }
+  .line { position:absolute; background:${palette.text}; opacity:0.06; }
+  .l1 { width:2px; height:600px; top:100px; left:30%; transform:rotate(15deg); }
+  .l2 { width:2px; height:500px; top:200px; right:25%; transform:rotate(-10deg); }
+</style></head><body>
+  <div class="shapes">
+    <div class="circle c1"></div><div class="circle c2"></div>
+    <div class="circle c3"></div><div class="line l1"></div>
+    <div class="line l2"></div>
+  </div>
+  <div class="container">
+    <div class="keyword">${keyword}</div>
+  </div>
+</body></html>`;
+
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  await page.setContent(html, { waitUntil: 'networkidle' });
+  const outputPath = path.join(outputDir, `ai-img-${String(slideIndex).padStart(2,'0')}-${label}.png`);
+  await page.screenshot({ path: outputPath, type: 'png' });
+  await browser.close();
+  return outputPath;
+}
+
+module.exports = { generateConceptImage };
+```
+
+**Usage from the pipeline** (batch all slides in one browser instance):
+
+```javascript
+const { chromium } = require('playwright');
+
+async function batchGenerateConceptImages(slides, outputDir) {
+  const browser = await chromium.launch();
+  const results = [];
+  for (const slide of slides) {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    // ... set HTML content with slide.primary_keyword ...
+    const outputPath = `${outputDir}/ai-img-${slide.index}-${slide.label}.png`;
+    await page.screenshot({ path: outputPath, type: 'png' });
+    await page.close();
+    results.push(outputPath);
+  }
+  await browser.close();
+  return results;
+}
+```
+
+**CRITICAL**: Before using this method, rasterize the gradient background to PNG using Sharp (html2pptx.js does NOT support CSS gradients directly):
+
+```javascript
+const sharp = require('sharp');
+
+// Rasterize gradient background for PPTX (CSS gradients not supported by html2pptx)
+// The concept image is a screenshot — so gradients are already rasterized in the PNG
+// Use the generated PNG directly in <img src="..."> in the slide HTML
+```
+
+Since the concept image is a **Playwright screenshot** (raster PNG), CSS gradients ARE captured correctly. The gradient limitation only applies to HTML slides processed by html2pptx.js directly.
+
+### Priority 3: SVG Geometric Placeholder (simplest fallback)
+
+If even Playwright is unavailable, generate a minimal SVG and rasterize with Sharp:
+
+```javascript
+const sharp = require('sharp');
+
+async function generatePlaceholder(keyword, outputPath) {
+  const svg = `<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100%" height="100%" fill="#F8F9FA"/>
+    <circle cx="960" cy="440" r="200" fill="none" stroke="#D94F4F" stroke-width="3" opacity="0.3"/>
+    <circle cx="960" cy="440" r="140" fill="none" stroke="#D94F4F" stroke-width="2" opacity="0.2"/>
+    <circle cx="960" cy="440" r="80" fill="none" stroke="#D94F4F" stroke-width="1.5" opacity="0.15"/>
+    <text x="960" y="750" text-anchor="middle" font-family="sans-serif"
+          font-size="36" fill="#888888" opacity="0.6">${keyword}</text>
+  </svg>`;
+
+  await sharp(Buffer.from(svg)).png().toFile(outputPath);
+}
+```
+
+## 4.7 Environment-Specific Execution
+
+| Environment | Priority 1 | Priority 2 | Priority 3 |
+|-------------|-----------|-----------|-----------|
+| **OpenCode** | `task(run_in_background=true)` → Gemini generates images in parallel | HTML concept visual + Playwright screenshot (if task fails) | SVG + Sharp placeholder |
+| **Cursor (Gemini model)** | Direct Gemini image generation in main thread | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
+| **Cursor (non-Gemini)** | Skip (no Gemini available) | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
+
+**IMPORTANT**: In non-Gemini environments, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
+
+## 4.8 Image Quality Requirements
 
 | Item | Standard |
 |------|----------|
@@ -113,14 +300,36 @@ Priority 2 — Gemini API Direct (fallback):
 | Format | PNG (JPEG acceptable) |
 | File size | Under 5MB |
 | Style | Professional, clean, conceptual |
-| Colors | Visual harmony with slide palette (#FFFFFF background, grayscale tones) |
+| Colors | Visual harmony with slide palette |
 | Prohibited | No text, logos, watermarks, busy backgrounds |
-| Save location | `{original_filename}_pptx/assets/ai-img-{nn}-{label}.png` |
+| Save location | `{output_dir}/assets/ai-img-{NN}-{label}.png` |
 
-## 4.8 Failure Handling
+## 4.9 Failure Handling
 
-If image generation fails after exhausting all paths (NanoBanana Pro + Gemini API):
-1. **Do NOT leave the slide without a visual** — use a minimal geometric placeholder
-2. Log a warning: `"[WARNING] Image generation failed for slide {N} — using geometric placeholder"`
-3. Generate a simple SVG-based geometric shape (circle, hexagon, or abstract lines) in the slide's accent color as a minimal visual anchor
-4. **Never leave a content slide as pure text**
+```
+FOR each slide needing an image:
+  TRY Priority 1 (Gemini)
+    → IF success: save PNG, continue
+    → IF fail: log warning, try Priority 2
+
+  TRY Priority 2 (HTML concept visual + Playwright)
+    → IF success: save PNG, continue
+    → IF fail: log warning, try Priority 3
+
+  TRY Priority 3 (SVG + Sharp placeholder)
+    → IF success: save PNG, continue
+    → IF fail: CRITICAL — log error, but STILL generate slide (title-only as last resort)
+
+  AFTER all attempts:
+    → Verify file exists at expected path: ls -la {output_path}
+    → Verify file size > 0 bytes
+    → IF file missing or empty: regenerate with Priority 3
+```
+
+**Log format for diagnostics:**
+```
+[IMG-OK]  Slide 3: ai-img-03-architecture.png (Priority 1: Gemini, 245KB)
+[IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 2: HTML concept, 89KB)
+[IMG-WARN] Slide 7: ai-img-07-deployment.png (Priority 3: SVG placeholder, 12KB)
+[IMG-FAIL] Slide 9: generation failed — title-only slide (CRITICAL)
+```
