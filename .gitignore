@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Cache
+.ruff_cache/
+__pycache__/
+*.pyc
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Generated output (skill creates these per-document)
+*_pptx/
