@@ -8,7 +8,6 @@ description: >
   or background task delegation (OpenCode). Extracts core keywords to drive action titles,
   accent words, and visual coverage. Fully supports Korean/CJK text with Pretendard font.
 license: MIT
-allowed-tools: read write bash glob grep edit
 compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
