@@ -1,10 +1,10 @@
-# Visual QA Workflow
+# Visual QA Workflow (Phase 5.5)
 
-> **After PPTX/PDF generation, visually inspect slides to catch rendering issues that automated checks cannot detect.**
+> **After PDF generation, visually inspect slides to catch rendering issues that automated checks cannot detect.**
 
 ## When to Run Visual QA
 
-- After every PPTX + PDF generation (Step 8)
+- After every PDF generation (Phase 5 assembly)
 - Before reporting completion to the user
 
 ## QA Process
@@ -20,9 +20,8 @@ pdftoppm -png -r 150 output.pdf slide
 # Option B: Playwright page screenshot
 # Open each slide HTML in Playwright and capture screenshots
 
-# Option C: LibreOffice export (fallback)
-soffice --headless --convert-to pdf --outdir /tmp output.pptx
-pdftoppm -png -r 150 /tmp/output.pdf slide
+# Option C: direct PDF thumbnails (fallback)
+pdftoppm -jpeg -r 150 output.pdf slide
 ```
 
 ### Step 2: Visual Inspection Checklist
@@ -46,6 +45,11 @@ For each slide thumbnail, verify:
 | 13 | **URL integrity** | URLs not broken mid-domain, display-shortened if >80 chars, readable |
 | 14 | **Section structure** | H3 sub-headings preserved as bold sub-headers or separate slides |
 | 15 | **Information density** | Each slide conveys unique info — no "item list + truncated sentence" patterns |
+| 16 | **Visual Blueprint adherence** | Composition matches blueprint spec for each slide |
+| 17 | **Deck rhythm** | Density variation across deck (no 3+ same-density consecutive slides) |
+| 18 | **Coverage report** | All source sections accounted for (coverage_pct = 100%) |
+| 19 | **Image Manifest consistency** | Cached images still valid, no stale references |
+| 20 | **Mood arc** | Emotional progression follows story arc (tense→hopeful→confident) |
 
 ### Step 3: Report Issues
 
@@ -77,6 +81,8 @@ Scope definition:
 | `markdown_token_leakage_count` | Count of leaked tokens (`###`, `##`, `#`, ``` , `, raw `[text](url)`, raw list markers) | `0` | `> 0` |
 | `truncated_sentence_ratio` | `slides_with_ellipsis / total_content_slides * 100` | `0%` | `> 0%` |
 | `duplicate_text_ratio` | `slides_with_title_body_overlap_over_50pct / total_slides * 100` | `< 5%` | `>= 5%` |
+| `coverage_pct` | `truly_cut + in_deck + in_appendix + in_speaker_notes == total_source_sections` | `100%` | `< 100%` |
+| `blueprint_adherence_ratio` | `slides_matching_blueprint / total_slides * 100` | `>= 90%` | `< 80%` |
 
 If any hard fail condition is met:
 
@@ -91,7 +97,7 @@ If any hard fail condition is met:
 
 ## Automated vs Manual QA
 
-| Automated (Step 7) | Visual QA (This Step) |
+| Automated (Phase 5.1) | Visual QA (This Step) |
 |--------------------|----------------------|
 | Pixel-based boundary checks | Rendering fidelity |
 | Bounding box intersection | Visual balance/aesthetics |

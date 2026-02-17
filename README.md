@@ -1,7 +1,7 @@
 # MaraudersPPT Skill
 
-A Claude Code Skill that automatically converts Markdown documents into presentation-quality slides (.pptx + .pdf).
-Preserves the original Markdown's structure, images, and data while simultaneously generating an editable PPTX and a presentation-ready PDF.
+A Claude Code Skill that automatically converts Markdown documents into presentation-quality slides (.pdf).
+Preserves the original Markdown's structure, images, and data while generating a presentation-ready PDF.
 
 > **PDF is the primary presentation output** — all visual elements are designed for static rendering.
 > No animations, transitions, buttons, or interactive elements are generated.
@@ -30,7 +30,7 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 | **Auto Slide Mapping** | H1 → Title, H2 → Section divider, H3 → Sub-header — structure preserved |
 | **23 Layout Types** | Dedicated layouts for text, tables, code, images, lists, KPIs, charts, timelines, etc. |
 | **Infographic Auto-Conversion** | Detects numeric, comparison, and sequential data patterns → auto-maps to 8 chart types (AGGRESSIVE mode) |
-| **Parallel Execution** | 5-wave parallel pipeline — AI image gen, chart rendering, and slide HTML gen run concurrently |
+| **Parallel Execution** | 6-wave parallel pipeline — AI image gen, chart rendering, and slide HTML gen run concurrently |
 | **Executive Summary** | Auto-generates a key KPI summary slide right after the title for decks with 10+ slides |
 | **CTA Closing** | Final slide with key message + Next Steps + contact info |
 | **AI Hint Special Handling** | `[AI RULE]`, `[AI DECISION]`, `[AI NOTE]`, `[AI CONTEXT]` highlighted slides |
@@ -38,11 +38,19 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 | **16px Minimum Font** | All chart/infographic content text ≥ 16px (exceptions: slide numbers 10pt, captions 12pt) |
 | **Mandatory Original Images** | All `![alt](path)` images from the MD file are inserted into slides (never omitted) |
 | **AI Image Generation** | Auto-generates photorealistic content images via Cursor native image gen / OpenCode background tasks |
+| **Persistent Image Reuse** | Generated images are cached per page key and reused across reruns unless user explicitly requests refresh |
 | **Layout Integrity** | Auto-validates overflow/overlap/margin violations + up to 3 regeneration attempts |
 | **Slide Flow Optimization** | MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX rules applied |
-| **Version Control** | Each generation outputs `v{M}.{m}_filename.pptx` + `.pdf` simultaneously |
+| **Version Control** | Each generation outputs `v{M}.{m}_filename.pdf` |
+| **Low-Token File Pipeline** | Intermediate JSON artifacts are written to disk (`.pipeline/`) to avoid large stdin/stdout payloads |
 | **Cross-Platform** | Works on macOS, Windows, and Linux — no OS-specific dependencies |
 | **Korean/CJK Full Support** | Pretendard font-based with full fallback chain (Apple SD Gothic Neo → Malgun Gothic → Noto Sans KR) |
+| **Input Contract** | Audience, goal, and time constraints captured upfront for targeted content generation |
+| **Section Cards** | Semantic analysis of content structure with visual blueprint mapping |
+| **7-Role Narrative Taxonomy** | Structured narrative roles (Context, Problem, Solution, Evidence, Impact, Action, Closing) |
+| **Visual Blueprint** | Pre-generation layout planning with role-to-slide mapping |
+| **Dual Output** | Generates both presentation deck and detailed appendix for comprehensive coverage |
+| **Image Manifest** | Cache system for generated images with reuse tracking and refresh control |
 
 ---
 
@@ -60,7 +68,7 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 
 ## Output Language Rule
 
-> The generated PPT follows the source Markdown's language.
+> The generated presentation PDF follows the source Markdown's language.
 > Korean MD → Korean slides, English MD → English slides, Japanese MD → Japanese slides.
 > This skill does NOT translate content — it preserves the original language as-is.
 
@@ -68,10 +76,10 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 
 ## IDE Environment Behavior
 
-| Environment | AI Image Generation | PPT Conversion | Model Switching |
-|-------------|-------------------|----------------|-----------------|
-| **Cursor 2.4+ / Antigravity** | Native image gen (built-in agent tool) | User's selected model | **Not required** |
-| **OpenCode** | Background task via `task()` | User's selected model | **Not required** |
+| Environment | AI Image Generation | PDF Rendering | Model Switching |
+|-------------|-------------------|---------------|-----------------|
+| **Cursor 2.4+ / Antigravity** | Native image gen (built-in agent tool) | Playwright-based renderer | **Not required** |
+| **OpenCode** | Background task via `task()` | Playwright-based renderer | **Not required** |
 
 - **Cursor / Antigravity**: Uses built-in image generation agent tool (powered by Nano Banana Pro) — no model switch needed
 - **OpenCode**: Image generation runs as a background task via `task(run_in_background=true)`
@@ -84,11 +92,34 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 ```
 docs/
 ├── prd.md                        ← Original Markdown
-└── prd_pptx/                     ← Auto-generated folder
-    ├── v1.0_prd.pptx             ← Editable PowerPoint
+└── prd_slides/                   ← Auto-generated folder
     ├── v1.0_prd.pdf              ← Presentation PDF (primary output)
     └── assets/                   ← Chart screenshots / AI-generated images
 ```
+
+### Image Cache (Persistent Reuse)
+
+Generated images are never deleted by the pipeline. The slide-image mapping is stored at:
+
+```
+{output_dir}/assets/image-cache.json
+```
+
+- Same page key (`imageKey`) on rerun -> reuse existing image
+- New page key -> generate and cache a new image
+- Explicit refresh only when requested by user (`--refresh=<imageKey>` or `--refresh=all`)
+
+### Pipeline Artifacts (Low-Token Mode)
+
+`gen_pdf.js` now writes intermediate artifacts to:
+
+```
+{output_dir}/.pipeline/
+```
+
+- `sections.json` (parsed MD sections)
+- `slides.json` (summarized slide IR)
+- `html-files.json` (render target list)
 
 ---
 
@@ -129,8 +160,6 @@ html = render_chart("bar_chart", [
 
 | Package | Role | Required |
 |---------|------|:--------:|
-| `document-skills/pptx` | html2pptx rendering engine, PptxGenJS API | **Required** |
-| `pptxgenjs` | PowerPoint file generation | **Required** |
 | `playwright` | HTML rendering / PDF generation / chart screenshots | **Required** |
 | `sharp` | Image post-processing (rasterization) | **Required** |
 | Native image gen | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
@@ -143,29 +172,30 @@ html = render_chart("bar_chart", [
 ```
 MaraudersPPT-Skill/
 ├── README.md                      ← This file
-├── SKILL.md                       ← Skill workflow, layouts, checklist (v1.2)
+├── SKILL.md                       ← Skill workflow, layouts, checklist (v2.0.0)
 ├── LICENSE                        ← MIT License
-├── package.json                   ← npm dependencies (playwright, pptxgenjs, sharp)
+├── package.json                   ← npm dependencies (playwright, sharp)
 ├── .gitignore                     ← Git ignore rules
 ├── references/                    ← Detailed reference docs (progressive disclosure)
-│   ├── keyword-extraction.md      ← Core keyword extraction rules
+│   ├── insight-extraction.md      ← Section Card schema, insight extraction algorithm
 │   ├── content-distillation.md    ← Slide text limits & distillation algorithm
 │   ├── image-generation.md        ← Visual coverage audit & prompt derivation
 │   ├── layout-integrity.md        ← Safe areas, font metrics, verification
-│   ├── parallel-execution.md      ← 5-wave architecture & performance
+│   ├── parallel-execution.md      ← 6-wave architecture & performance
 │   └── visual-qa.md              ← Post-generation visual inspection
 ├── templates/
-│   └── charts/                    ← 8 infographic Python templates
-│       ├── __init__.py            ← render_chart(type, data) dispatcher
-│       ├── base.py                ← Shared CSS & utilities
-│       ├── kpi_cards.py           ← KPI card grid
-│       ├── bar_chart.py           ← Horizontal bar chart
-│       ├── donut_chart.py         ← Donut chart
-│       ├── process_flow.py        ← Process flow
-│       ├── timeline.py            ← Timeline
-│       ├── comparison.py          ← Side-by-side comparison
-│       ├── icon_grid.py           ← Icon grid
-│       └── funnel.py              ← Funnel chart
+│   ├── charts/                    ← 8 infographic Python templates
+│   │   ├── __init__.py            ← render_chart(type, data) dispatcher
+│   │   ├── base.py                ← Shared CSS & utilities
+│   │   ├── kpi_cards.py           ← KPI card grid
+│   │   ├── bar_chart.py           ← Horizontal bar chart
+│   │   ├── donut_chart.py         ← Donut chart
+│   │   ├── process_flow.py        ← Process flow
+│   │   ├── timeline.py            ← Timeline
+│   │   ├── comparison.py          ← Side-by-side comparison
+│   │   ├── icon_grid.py           ← Icon grid
+│   │   └── funnel.py              ← Funnel chart
+│   └── compositions/              ← Planned: Section Card composition templates
 └── docs/
     ├── design-spec.md             ← Design spec (colors, typography, layout, chart CSS)
     └── prd-md-to-pptx-skill.md    ← Product Requirements Document (PRD)
@@ -177,8 +207,8 @@ MaraudersPPT-Skill/
 
 | Document | Contents |
 |----------|----------|
-| [`SKILL.md`](./SKILL.md) | Skill workflow (Steps 0–9), 23 layouts, validation checklist, design rules summary |
-| [`references/`](./references/) | Detailed reference docs: keyword extraction, content distillation, image generation, layout integrity, parallel execution, visual QA |
+| [`SKILL.md`](./SKILL.md) | Skill workflow (Phases 0-5), 23 layouts, validation checklist, design rules summary |
+| [`references/`](./references/) | Detailed reference docs: insight extraction, content distillation, image generation, layout integrity, parallel execution, visual QA |
 | [`docs/design-spec.md`](./docs/design-spec.md) | Color palette, typography, 8px grid, layout specs, 8 infographic CSS specifications |
 | [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Feature spec, conversion rules, architecture, acceptance criteria |
 

@@ -1,386 +1,382 @@
-# Slide Image Generation (Step 4)
-
-> **Every slide that lacks a visual element MUST receive a generated image.**
-> A slide without graphics is incomplete. No exceptions.
+# Slide Image Generation (Phase 4)
+> Every content slide must include a visual element.
+> Phase 4 uses a strict 3-priority image system and manifest-based cache reuse.
 
 ## 4.1 Visual Coverage Audit
+After Phase 3 (Visual Blueprint), audit all slides for visual completeness.
 
-After Step 3 (Slide Mapping), scan every slide and classify:
+| Slide Status | Has Visual? | Action Required | Priority |
+|-------------|:-----------:|-----------------|----------|
+| Has original MD image (`![alt](path)`) | ✅ | Copy to `assets/`, reference absolute path, never replace | Priority 1 |
+| Has chart/infographic intent | ⚠️ | Render with `templates/charts/` and screenshot | Priority 2 |
+| Has diagram/composition intent | ⚠️ | Render as HTML and screenshot | Priority 2 |
+| Has code block | ✅ | None (code itself is visual) | N/A |
+| Has table | ✅ | None (table itself is visual) | N/A |
+| `section-divider` | ✅ | None | N/A |
+| `title` without visual | ⚠️ | Add subtle conceptual visual | Priority 2 or 3 |
+| `text-body` without visual | ❌ | Must add visual support | Priority 2 or 3 |
+| `bullet-list` without visual | ❌ | Must add visual support | Priority 2 or 3 |
+| `ai-hint` without visual | ❌ | Must add visual support | Priority 2 or 3 |
+| `quote` without visual | ❌ | Must add visual support | Priority 2 or 3 |
+| `checklist` without visual | ❌ | Must add visual support | Priority 2 or 3 |
+| `closing` without visual | ⚠️ | Add subtle conceptual visual | Priority 2 or 3 |
 
-| Slide Status | Has Visual? | Action Required |
-|-------------|:-----------:|-----------------|
-| Has original MD image (`![alt](path)`) | ✅ | None — use original image |
-| Has chart/infographic (auto-detected in Step 2.5) | ✅ | None — use chart rendering |
-| Has code block (dark background = visual) | ✅ | None — code itself is visual |
-| Has table (native table = visual) | ✅ | None — table itself is visual |
-| `section-divider` slide | ✅ | None — inverted background is visual |
-| `title` slide | ⚠️ | Generate abstract conceptual image |
-| `text-body` slide — **NO visual** | ❌ | **MUST generate image** |
-| `bullet-list` slide — **NO visual** | ❌ | **MUST generate image** |
-| `ai-hint` slide — **NO visual** | ❌ | **MUST generate image** |
-| `quote` slide — **NO visual** | ❌ | **MUST generate image** |
-| `checklist` slide — **NO visual** | ❌ | **MUST generate image** |
-| `closing` slide | ⚠️ | Generate abstract conceptual image |
+Hard rule:
+```
+text_only_slide_ratio == 0%  (content slides only)
+```
 
-**Rule: 0% of content slides may be text-only (excluding code/table/chart slides).**
+Metric scope:
+- `content_slides`: all slides except `title`, `section-divider`, `appendix-divider`, `closing`
+- `text_only_content_slides`: content slides with no image/chart/table/code/infographic visual
 
-Metric scope for this rule:
-- `content_slides` = all slides except `title`, `section-divider`, `appendix-divider`, `closing`
-- `text_only_content_slides` = content slides with no image/chart/table/code/infographic visual
-
-### Empty Slide Detection (CRITICAL GUARD)
-
-During the visual coverage audit, also check for **empty content**:
-
+### Empty Slide Detection (Critical Guard)
 ```
 FOR each slide:
   IF slide.body_content is EMPTY AND slide.visual is NONE:
-    → CRITICAL: This slide will render as a blank page
-    → RECOVERY (in order):
-      1. Re-extract content from source MD section (distillation may have dropped it)
-      2. If source section was a plain paragraph → convert to keyword bullet NOW
-      3. If section is genuinely empty (heading-only) → merge with adjacent slide
-      4. If no merge target → generate AI image from section title + use title as body text
-    → NEVER allow a slide to render with only a title and blank body
+    -> CRITICAL: blank rendering risk
+    -> RECOVERY order:
+       1) Re-extract from Phase 1 Section Card (`source_lines`, `must_keep`)
+       2) If source is paragraph-only, convert to concise bullets (Phase 2)
+       3) If source is heading-only, merge with adjacent compatible slide
+       4) If merge impossible, use headline + minimal conceptual visual
+    -> NEVER allow title-only blank body
 ```
 
-This guard catches content lost during Step 2.9 distillation — especially **plain paragraphs** that were incorrectly treated as deletable content.
+## 4.2 Image Prompt Derivation (from Insight Extraction)
+Prompt sources are Phase 1 Section Card fields, not keyword extraction.
 
-## 4.2 Image Prompt Derivation (from Keyword Extraction)
+Primary fields:
+- `insight` (first priority)
+- `claim` (second priority)
+- `headline` (framing)
+- `evidence`, `kpi_metrics`, `stakes`, `role` (modifiers)
 
-The image prompt is derived directly from Step 2.3's `primary_keyword`:
+Do not use `primary_keyword` in v2.0.
 
+### Prompt Derivation Formula
 ```
-Image Concept = Slide's primary_keyword → One-line visual metaphor
+visual_intent = interpret(insight, claim, role)
+domain = infer_domain(source_section, evidence, must_keep)
+tone = infer_tone(stakes, confidence, role)
 
-Examples:
-  primary_keyword: "processing speed 3x improvement"
-  → Image prompt: "professional high-speed data stream flowing through modern server infrastructure, clean white background, high resolution, no text, no logos, no watermarks"
-
-  primary_keyword: "MSA architecture adoption"
-  → Image prompt: "interconnected microservices nodes forming a distributed network architecture, professional clean diagram style, high resolution, no text, no logos, no watermarks"
-
-  primary_keyword: "failure rate 73% reduction"
-  → Image prompt: "professional quality control dashboard showing dramatic improvement trend, clean minimal design, high resolution, no text, no logos, no watermarks"
+prompt =
+  "{visual_intent} in {domain} context, {tone}, " +
+  "professional corporate presentation quality, clean composition, high resolution, " +
+  "no text, no logos, no watermarks"
 ```
 
-## 4.3 Prompt Construction Rules
+### Prompt Construction Rules
+Every prompt must include:
+1. Core concept from `insight` or `claim`
+2. Domain modifier (business/infra/healthcare/finance/etc.)
+3. Style modifier (`professional`, `corporate presentation quality`)
+4. Quality modifier (`high resolution`, `clear focal subject`)
+5. Prohibition clause (`no text, no logos, no watermarks`)
 
-Every image prompt MUST include:
-1. **Core concept** derived from `primary_keyword` (1 sentence)
-2. **Style keywords**: `"professional"`, `"clean background"`, `"high resolution"`
-3. **Prohibition clause**: `"no text, no logos, no watermarks"`
-4. **Contextual modifier**: Match the domain of the slide content (tech, business, medical, etc.)
-5. **Tone**: Corporate presentation quality — NOT stock photo, NOT artistic illustration
+### Insight -> Prompt Examples
+```
+insight: "결제 한 건에 3초면 하루 10만건 기준 83시간 낭비"
+claim: "결제 지연은 운영 인건비와 고객 이탈을 동시에 유발한다"
+
+prompt:
+"professional payment operations environment with dramatic clock motif showing cumulative time loss,
+ enterprise systems context, urgent but controlled tone, clean composition, high resolution,
+ no text, no logos, no watermarks"
+```
+
+## 4.3 Image Manifest (`.image-manifest.json`)
+All reusable image outputs are tracked in a manifest.
+
+Location:
+```
+{output_dir}/.image-manifest.json
+```
+
+Schema:
+```json
+{
+  "version": "2.0",
+  "generated_at": "ISO timestamp",
+  "entries": [
+    {
+      "slide_id": 3,
+      "type": "ai-generated",
+      "file_path": "assets/ai-img-03-architecture.png",
+      "content_hash": "sha256(prompt+params)",
+      "data_hash": null,
+      "source_insight": "결제 한 건에 3초면 하루 10만건 기준 83시간 낭비",
+      "created_at": "ISO timestamp",
+      "reusable": true
+    },
+    {
+      "slide_id": 5,
+      "type": "chart",
+      "file_path": "assets/chart-05-throughput.png",
+      "content_hash": null,
+      "data_hash": "sha256(chart_data)",
+      "source_insight": "피크 처리량 병목이 SLA를 지연시킴",
+      "created_at": "ISO timestamp",
+      "reusable": true
+    },
+    {
+      "slide_id": 2,
+      "type": "original-md",
+      "file_path": "assets/md-img-02-architecture.png",
+      "content_hash": null,
+      "data_hash": null,
+      "source_insight": "원본 MD 이미지 사용",
+      "created_at": "ISO timestamp",
+      "reusable": true
+    }
+  ]
+}
+```
+
+### Hash Policy
+- `type=ai-generated`: `content_hash = sha256(normalized_prompt + render_params + generator_id)`
+- `type=chart`: `data_hash = sha256(normalized_data + chart_type + template_version + style)`
+- `type=original-md`: hash fields may remain `null` (deterministic source path)
+
+### Cache Logic (Check -> Hit -> Miss -> Refresh)
+```
+FOR each slide requiring visual:
+  determine type by priority
+  compute lookup hash (if applicable)
+  lookup manifest by (slide_id, type)
+
+  IF reusable=true AND hash matches AND file exists:
+    -> CACHE HIT: reuse file_path
+  ELSE:
+    -> CACHE MISS: generate/copy and write entry
+
+  IF explicit refresh requested:
+    -> bypass hit for selected scope
+    -> regenerate and overwrite hash/timestamp
+```
+
+Explicit refresh examples: `--refresh=all`, `--refresh=slide:7`, `--refresh=type:ai-generated`, or user request "regenerate all AI images".
+
+Without explicit refresh request, cache hits must be reused.
+
+### Manifest Integrity Rules
+- `version` must be `2.0`
+- `generated_at` updates every run
+- `file_path` is output-relative (`assets/...`)
+- stale/missing file paths trigger regeneration
+- no duplicate `(slide_id, type)` entries
 
 ## 4.4 Layout Adaptation When Image Is Added
+When a text-focused layout receives a visual, adapt while preserving claim hierarchy.
 
-When a generated image is added to a previously text-only slide:
+| Original Layout | New Layout | Image Placement |
+|----------------|-----------|-----------------|
+| `text-body` | `image-text` | Left 50% image, right 50% text |
+| `bullet-list` | `image-text` | Left 50% image, right 50% bullets |
+| `ai-hint` | `ai-hint` (keep) | Top image band (30% height) |
+| `quote` | `quote` (keep) | Background image at 15% opacity |
+| `checklist` | `image-text` | Left 40% image, right 60% checklist |
+| `title` | `title` (keep) | Background image at 10% opacity |
+| `closing` | `closing` (keep) | Background image at 10% opacity |
 
-| Original Layout | New Layout | Image Position |
-|----------------|-----------|----------------|
-| `text-body` | `image-text` | Left 50% image \| Right 50% text |
-| `bullet-list` | `image-text` | Left 50% image \| Right 50% bullets |
-| `ai-hint` | `ai-hint` (keep) | Image inserted above hint block (30% height) |
-| `quote` | `quote` (keep) | Background image at 15% opacity behind quote |
-| `checklist` | `image-text` | Left 40% image \| Right 60% checklist |
-| `title` | `title` (keep) | Subtle background image at 10% opacity |
-| `closing` | `closing` (keep) | Subtle background image at 10% opacity |
+Critical rule:
+```
+IF switched to image-text:
+  -> re-run distillation for reduced text width
+  -> keep claim + strongest evidence before secondary details
+```
 
-**CRITICAL**: When layout switches to `image-text`, the text content MUST be condensed to fit the reduced text area (50–60% of slide width). Apply content distillation limits for `image-text` layout.
-
-## 4.5 Image Save & Reference Pipeline (CRITICAL)
-
-> **This is the pipeline that connects generated images to the final PPTX/PDF.**
-> If this is broken, images won't appear even if generation succeeds.
+## 4.5 Image Save & Reference Pipeline (Critical)
+This pipeline connects image files to HTML rendering and PDF embedding.
 
 ### Save Location
-
-All generated images MUST be saved to:
 ```
-{output_dir}/assets/ai-img-{NN}-{label}.png
-
-Example:
-  docs/prd_pptx/assets/ai-img-01-architecture.png
-  docs/prd_pptx/assets/ai-img-02-performance.png
+{output_dir}/assets/
 ```
 
-Create the `assets/` directory before generating any images:
+Filename examples:
+```
+assets/md-img-02-architecture.png
+assets/chart-05-throughput.png
+assets/ai-img-07-reliability.png
+```
+
+Create directory before copy/generation:
 ```bash
 mkdir -p "{output_dir}/assets"
 ```
 
-### HTML Reference (how html2pptx.js picks up images)
-
-In the HTML slide file, reference images using **absolute file paths**:
+### HTML Reference Rules
+Use absolute file paths in slide HTML:
 
 ```html
-<!-- CORRECT — absolute path (html2pptx.js resolves file:// URIs) -->
-<img src="/absolute/path/to/docs/prd_pptx/assets/ai-img-01-architecture.png"
+<!-- CORRECT: absolute path -->
+<img src="/absolute/path/to/docs/prd_slides/assets/ai-img-07-reliability.png"
      style="width: 460pt; height: 340pt; object-fit: cover;">
 
-<!-- ALSO CORRECT — file:// URI (html2pptx.js strips file:// prefix) -->
-<img src="file:///absolute/path/to/docs/prd_pptx/assets/ai-img-01-architecture.png"
+<!-- ALSO CORRECT: file:// URI -->
+<img src="file:///absolute/path/to/docs/prd_slides/assets/chart-05-throughput.png"
      style="width: 460pt; height: 340pt; object-fit: cover;">
 ```
 
-**How it works internally**:
-1. Playwright renders the HTML slide → `getBoundingClientRect()` gets image position/size
-2. `el.src` captures the full path (Playwright resolves relative paths to `file://` URIs)
-3. html2pptx.js strips `file://` prefix → passes to PptxGenJS `addImage({ path: ... })`
-4. PptxGenJS reads the PNG from disk → embeds into PPTX
+Internal flow:
+1. Playwright renders HTML and computes image geometry
+2. `el.src` resolves absolute local path
+3. Playwright renders the HTML slide with embedded `<img>` tags directly to PDF
 
-**For PDF generation**: Playwright's `page.pdf()` also resolves local `<img src>` paths correctly when rendering HTML files from disk.
+PDF rendering also resolves local `<img src>` correctly when rendering local HTML files.
 
-### Image Sizing for Slide Layouts
-
+### Image Sizing for Layouts
 | Layout | Image Dimensions (pt) | CSS Style |
 |--------|----------------------|-----------|
-| `image-text` (left 50%) | 460 × 340 | `width: 460pt; height: 340pt; object-fit: cover` |
-| `title` (background 10%) | 720 × 405 | `width: 100%; height: 100%; opacity: 0.10` |
-| `closing` (background 10%) | 720 × 405 | `width: 100%; height: 100%; opacity: 0.10` |
-| `ai-hint` (top 30%) | 720 × 120 | `width: 100%; height: 120pt; object-fit: cover` |
-| `quote` (background 15%) | 720 × 405 | `width: 100%; height: 100%; opacity: 0.15` |
+| `image-text` (left 50%) | 460 x 340 | `width: 460pt; height: 340pt; object-fit: cover` |
+| `title` (background 10%) | 720 x 405 | `width: 100%; height: 100%; opacity: 0.10` |
+| `closing` (background 10%) | 720 x 405 | `width: 100%; height: 100%; opacity: 0.10` |
+| `ai-hint` (top 30%) | 720 x 120 | `width: 100%; height: 120pt; object-fit: cover` |
+| `quote` (background 15%) | 720 x 405 | `width: 100%; height: 100%; opacity: 0.15` |
 
-## 4.6 Generation Methods (3 paths, in priority order)
+## 4.6 Generation Methods (3-Priority Image System)
+Priority is strict. Lower priority cannot replace higher availability.
 
-### Priority 1A: Native Image Generation (Cursor / Antigravity)
-
-> **Cursor 2.4+** and **Google Antigravity** have built-in image generation agent tools (powered by Nano Banana Pro / Gemini 3 Pro Image). The agent generates images when you describe them — no CLI commands, no model switching, no installation required.
-
-**How it works:**
-1. The skill describes the desired image in natural language
-2. Cursor's agent invokes its built-in image generation tool
-3. The generated image is saved to the project's `assets/` folder by default
-4. The image is shown inline in chat as a preview
-
-**Generation per slide:**
+### Priority 1: Original MD Images (Mandatory First)
+Source pattern:
 ```
-For EACH slide needing an image:
-  Generate a photorealistic image for a presentation slide.
-  Concept: {image_prompt_from_4.2}
-  Save to: {output_dir}/assets/ai-img-{NN}-{label}.png
-  Requirements: 1920x1080px, PNG, professional corporate style,
-  clean background, NO text/logos/watermarks.
+![alt](relative/or/absolute/path)
 ```
 
-**Batch generation** (describe all needed images, let agent generate sequentially):
-```
-FOR EACH slide needing an image:
-  → Describe image using prompt from Section 4.2
-  → Agent generates via native image gen tool → saves to {output_dir}/assets/
-  → Verify: ls -la {output_path} (file exists, size > 0)
-```
+Rules:
+1. Always consume original MD image first
+2. Never replace with chart/AI image when source image exists
+3. Copy to `assets/md-img-{NN}-{slug}.png`
+4. Register manifest entry with `type=original-md`
+5. Bind copied file with absolute path in slide HTML
 
-**Key advantages over CLI approach:**
-- Zero setup — works out of the box in Cursor 2.4+ and Google Antigravity
-- No model switching — image gen works regardless of selected chat model
-- Saves directly to project `assets/` folder
-- Inline preview in chat for immediate visual verification
+### Priority 2: HTML Code Generation (Charts, Diagrams, Compositions)
+Use when Priority 1 is unavailable and intent is structurally renderable.
 
-### Priority 1B: Background Task Delegation (OpenCode environments)
+Routes:
+- `templates/charts/` for data-driven visuals
+- custom HTML for diagrams/compositions
+- Playwright screenshot to PNG for stable embedding
 
-**OpenCode** — use `task()` to delegate image generation to a background agent:
+Chart example:
+```python
+from templates.charts import render_chart
 
-```
-For EACH slide needing an image:
-  task(
-    run_in_background=true,
-    category="quick",
-    prompt="Generate a photorealistic image for a presentation slide.
-            Concept: {image_prompt_from_4.2}
-            Save the image to: {output_dir}/assets/ai-img-{NN}-{label}.png
-            Requirements: 1920x1080px, PNG, professional corporate style,
-            clean background, NO text/logos/watermarks.
-            Use image generation or create a high-quality HTML visual
-            and screenshot it with Playwright."
-  )
+html = render_chart("bar_chart", [
+    {"label": "Before", "value": 42, "display": "42m"},
+    {"label": "After", "value": 8, "display": "8m", "max": True}
+])
 ```
 
-**Note**: Background tasks run in parallel — fire all image generation tasks at once, continue with other pipeline work, then collect results before Step 5.
-
-### Priority 2: HTML Concept Visual + Playwright Screenshot (ALWAYS WORKS)
-
-> **This is the reliable fallback that works in ANY environment with zero external dependencies.**
-> Generate a styled HTML visual and screenshot it with Playwright.
-
-Create a Node.js script that generates a concept visual:
-
+HTML concept visual code (retained fallback):
 ```javascript
-// generate-concept-image.js
 const { chromium } = require('playwright');
 const path = require('path');
 
-async function generateConceptImage(keyword, label, outputDir, slideIndex) {
-  // Color palette derived from slide design
-  const colors = [
-    { bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', text: '#fff' },
-    { bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', text: '#fff' },
-    { bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', text: '#fff' },
-    { bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', text: '#fff' },
-    { bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', text: '#333' },
-    { bg: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', text: '#333' },
-  ];
-  const palette = colors[slideIndex % colors.length];
-
-  const html = `<!DOCTYPE html>
-<html><head><style>
-  body { margin:0; width:1920px; height:1080px; display:flex;
-         align-items:center; justify-content:center;
-         background:${palette.bg}; font-family:sans-serif; overflow:hidden; }
-  .container { text-align:center; padding:80px; }
-  .icon { font-size:200px; opacity:0.15; margin-bottom:40px; }
-  .keyword { font-size:48px; font-weight:700; color:${palette.text};
-             opacity:0.9; letter-spacing:2px; text-transform:uppercase;
-             max-width:900px; line-height:1.3; }
-  .shapes { position:absolute; top:0; left:0; width:100%; height:100%;
-            pointer-events:none; overflow:hidden; }
-  .circle { position:absolute; border-radius:50%; opacity:0.08;
-            background:${palette.text}; }
-  .c1 { width:400px; height:400px; top:-100px; right:-100px; }
-  .c2 { width:300px; height:300px; bottom:-80px; left:-80px; }
-  .c3 { width:200px; height:200px; top:40%; left:10%; }
-  .line { position:absolute; background:${palette.text}; opacity:0.06; }
-  .l1 { width:2px; height:600px; top:100px; left:30%; transform:rotate(15deg); }
-  .l2 { width:2px; height:500px; top:200px; right:25%; transform:rotate(-10deg); }
-</style></head><body>
-  <div class="shapes">
-    <div class="circle c1"></div><div class="circle c2"></div>
-    <div class="circle c3"></div><div class="line l1"></div>
-    <div class="line l2"></div>
-  </div>
-  <div class="container">
-    <div class="keyword">${keyword}</div>
-  </div>
-</body></html>`;
-
+async function generateConceptImage(insightText, label, outputDir, slideIndex) {
+  const html = `<html><body style="margin:0;width:1920px;height:1080px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);font-family:sans-serif;overflow:hidden;">
+    <div style="max-width:980px;color:#fff;font-size:48px;font-weight:700;line-height:1.3;text-align:center;opacity:.9;">${insightText}</div>
+  </body></html>`;
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   await page.setContent(html, { waitUntil: 'networkidle' });
-  const outputPath = path.join(outputDir, `ai-img-${String(slideIndex).padStart(2,'0')}-${label}.png`);
-  await page.screenshot({ path: outputPath, type: 'png' });
+  const out = path.join(outputDir, `ai-img-${String(slideIndex).padStart(2, '0')}-${label}.png`);
+  await page.screenshot({ path: out, type: 'png' });
   await browser.close();
-  return outputPath;
-}
-
-module.exports = { generateConceptImage };
-```
-
-**Usage from the pipeline** (batch all slides in one browser instance):
-
-```javascript
-const { chromium } = require('playwright');
-
-async function batchGenerateConceptImages(slides, outputDir) {
-  const browser = await chromium.launch();
-  const results = [];
-  for (const slide of slides) {
-    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-    // ... set HTML content with slide.primary_keyword ...
-    const outputPath = `${outputDir}/ai-img-${slide.index}-${slide.label}.png`;
-    await page.screenshot({ path: outputPath, type: 'png' });
-    await page.close();
-    results.push(outputPath);
-  }
-  await browser.close();
-  return results;
+  return out;
 }
 ```
 
-**CRITICAL**: Before using this method, rasterize the gradient background to PNG using Sharp (html2pptx.js does NOT support CSS gradients directly):
+Manifest rule for Priority 2:
+- `type=chart`
+- set `data_hash`
+- reuse on hash match
 
-```javascript
-const sharp = require('sharp');
+### Priority 3: LLM Image Generation (Insight-Based)
+Use when Priority 1 is unavailable and Priority 2 is not sufficient for narrative needs.
 
-// Rasterize gradient background for PPTX (CSS gradients not supported by html2pptx)
-// The concept image is a screenshot — so gradients are already rasterized in the PNG
-// Use the generated PNG directly in <img src="..."> in the slide HTML
-```
+Prompt source:
+- required: `insight`, `claim`
+- optional: `role`, `stakes`, `headline`, `evidence`
 
-Since the concept image is a **Playwright screenshot** (raster PNG), CSS gradients ARE captured correctly. The gradient limitation only applies to HTML slides processed by html2pptx.js directly.
+Execution:
+1. Build prompt from Section 4.2
+2. Compute `content_hash`
+3. Check manifest hit/miss
+4. Generate on miss and save to `assets/ai-img-{NN}-{label}.png`
+5. Register as `type=ai-generated`
 
-### Priority 3: SVG Geometric Placeholder (simplest fallback)
-
-If even Playwright is unavailable, generate a minimal SVG and rasterize with Sharp:
-
-```javascript
-const sharp = require('sharp');
-
-async function generatePlaceholder(keyword, outputPath) {
-  const svg = `<svg width="1920" height="1080" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100%" height="100%" fill="#F8F9FA"/>
-    <circle cx="960" cy="440" r="200" fill="none" stroke="#D94F4F" stroke-width="3" opacity="0.3"/>
-    <circle cx="960" cy="440" r="140" fill="none" stroke="#D94F4F" stroke-width="2" opacity="0.2"/>
-    <circle cx="960" cy="440" r="80" fill="none" stroke="#D94F4F" stroke-width="1.5" opacity="0.15"/>
-    <text x="960" y="750" text-anchor="middle" font-family="sans-serif"
-          font-size="36" fill="#888888" opacity="0.6">${keyword}</text>
-  </svg>`;
-
-  await sharp(Buffer.from(svg)).png().toFile(outputPath);
-}
-```
+If direct LLM generation is unavailable, fallback to HTML concept screenshot.
 
 ## 4.7 Environment-Specific Execution
-
 | Environment | Priority 1 | Priority 2 | Priority 3 |
 |-------------|-----------|-----------|-----------|
-| **Cursor 2.4+ / Antigravity** | Native image gen (built-in agent tool) → saves to `assets/` | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
-| **OpenCode** | `task(run_in_background=true)` → background agent generates images | HTML concept visual + Playwright screenshot (if task fails) | SVG + Sharp placeholder |
-| **Other / No image gen** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
+| **Cursor 2.4+ / Antigravity** | Original MD image copy | HTML code generation + Playwright screenshot | Native image generation from insight prompt |
+| **OpenCode** | Original MD image copy | HTML code generation + Playwright screenshot | Background `task(run_in_background=true)` generation |
+| **Other / No native image gen** | Original MD image copy | HTML code generation + Playwright screenshot (**primary generated route**) | HTML concept visual or SVG placeholder fallback |
 
-**IMPORTANT**: In environments without native image gen or `task()`, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
-
-**Environment detection order:**
-1. Cursor / Antigravity environment → use native image generation (Priority 1A)
-2. OpenCode environment (`task()` available) → use background delegation (Priority 1B)
-3. Neither available → skip to Priority 2 (HTML concept visual)
+Detection order: 1) MD image exists -> Priority 1, 2) chart/diagram/composition fit -> Priority 2, 3) else Priority 3, 4) if Priority 3 fails -> HTML concept fallback.
 
 ## 4.8 Image Quality Requirements
-
 | Item | Standard |
 |------|----------|
-| Resolution | 1920 × 1080 px |
+| Resolution | 1920 x 1080 px |
 | Format | PNG (JPEG acceptable) |
 | File size | Under 5MB |
 | Style | Professional, clean, conceptual |
-| Colors | Visual harmony with slide palette |
+| Colors | Harmonized with slide palette |
 | Prohibited | No text, logos, watermarks, busy backgrounds |
 | Save location | `{output_dir}/assets/ai-img-{NN}-{label}.png` |
 
+Additional checks: clear focal subject, no low-contrast noise behind text zones, no decorative clutter.
+
 ## 4.9 Failure Handling
-
 ```
-FOR each slide needing an image:
-  TRY Priority 1A (Cursor native image gen) or Priority 1B (OpenCode background task)
-    → Describe image using prompt from Section 4.2
-    → IF success: verify file at {output_dir}/assets/, continue
-    → IF fail: log warning, try Priority 2
+FOR each slide requiring visual support:
+  TRY Priority 1 (original MD image)
+    -> if exists: copy, manifest update, bind html, continue
 
-  TRY Priority 2 (HTML concept visual + Playwright)
-    → IF success: save PNG, continue
-    → IF fail: log warning, try Priority 3
+  CHECK manifest cache
+    -> if hit and file valid: reuse, continue
 
-  TRY Priority 3 (SVG + Sharp placeholder)
-    → IF success: save PNG, continue
-    → IF fail: CRITICAL — mark slide as "visual-missing" and FAIL pipeline
+  TRY Priority 2 (HTML chart/diagram/composition screenshot)
+    -> if success: manifest(data_hash), continue
+    -> if fail: warn, go Priority 3
 
-  AFTER all attempts:
-    → Verify file exists at expected path: ls -la {output_path}
-    → Verify file size > 0 bytes
-    → IF file missing or empty: mark as visual-missing and FAIL pipeline
+  TRY Priority 3 (LLM image from insight + claim)
+    -> if success: manifest(content_hash), continue
+    -> if fail: warn, run HTML concept fallback
 
-AFTER processing all slides:
-  → Compute text_only_slide_ratio
-  → IF text_only_slide_ratio > 0%:
-      HARD FAIL (do not generate PPTX/PDF)
-      report offending slide numbers
+  TRY HTML concept fallback
+    -> if success: manifest update, continue
+    -> if fail: try SVG placeholder
+
+  TRY SVG placeholder
+    -> if success: continue with warning
+    -> if fail: mark visual-missing and FAIL pipeline
+
+  AFTER each slide:
+    -> verify file exists
+    -> verify file size > 0
+    -> verify absolute html src
+
+AFTER all slides:
+  -> compute text_only_slide_ratio
+  -> IF > 0%: HARD FAIL (do not write PDF)
 ```
 
-**Log format for diagnostics:**
+Diagnostic log format:
 ```
-[IMG-OK]  Slide 3: ai-img-03-architecture.png (Priority 1: native image gen, 312KB)
-[IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 1: background task, 245KB)
-[IMG-OK]  Slide 7: ai-img-07-deployment.png (Priority 2: HTML concept, 89KB)
-[IMG-WARN] Slide 8: ai-img-08-security.png (Priority 3: SVG placeholder, 12KB)
-[IMG-FAIL] Slide 9: generation failed — visual missing (PIPELINE FAIL)
+[IMG-OK]    Slide 2: md-img-02-architecture.png (Priority 1: original-md)
+[IMG-OK]    Slide 5: chart-05-throughput.png (Priority 2: chart, cache hit)
+[IMG-OK]    Slide 7: ai-img-07-reliability.png (Priority 3: ai-generated)
+[IMG-WARN]  Slide 9: ai-img-09-risk.png (fallback: HTML concept visual)
+[IMG-FAIL]  Slide 11: generation failed -> visual-missing (PIPELINE FAIL)
 ```
+
+Failure policy:
+- any `visual-missing` slide blocks output
+- do not write `.pdf` if hard gates fail
+- report failing slide IDs and last attempted priority path

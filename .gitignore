@@ -24,3 +24,4 @@ Desktop.ini
 
 # Generated output (skill creates these per-document)
 *_pptx/
+*_slides/

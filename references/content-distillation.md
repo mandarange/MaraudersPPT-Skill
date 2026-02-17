@@ -1,4 +1,4 @@
-# Slide Content Distillation (Step 2.9)
+# Content Distillation (Phase 2.4)
 
 > **A slide is a visual aid, not a document.**
 > If there's too much text on a slide, the slide is WRONG — not "overflowing."
@@ -6,6 +6,8 @@
 >
 > **The presenter speaks. The slide shows keywords only.**
 > If the audience can read the slide instead of listening, you've failed.
+
+> **Distillation is now informed by `SectionCard.stakes`** — high-stakes sections preserve more detail, low-stakes sections are condensed more aggressively.
 
 ## The Core Rule
 
@@ -75,7 +77,7 @@ Split or move detail to appendix.
 HIERARCHY (in order of preference):
   1. Condense → keyword fragments (ALWAYS try this first)
   2. If too short to bullet → use as subtitle or caption text
-  3. If section has <15 words total → merge via SHORT-SECTION-MERGE (Step 2.8)
+   3. If section has <15 words total → merge via SHORT-SECTION-MERGE (Phase 2.6)
   4. ABSOLUTE PROHIBITION: A section that had content in the source MD
      must produce content on the slide. Zero-content slides = CRITICAL BUG.
 ```
@@ -117,17 +119,17 @@ Sections with ≤2 content lines (e.g., "License", "Contributing", "Contact"):
 
 ```
 FOR each content_block:
-  0. CLASSIFY content type: bullet list | paragraph | table | code | mixed
-  1. IF paragraph → Convert to keyword bullets FIRST (see Paragraph → Bullet above)
-  2. Extract keywords (Step 2.3)
-  3. Rewrite as keyword fragments (noun-phrase, no verbs, no filler)
-  4. Count total slide words
-  5. IF > 50 words (EN) / 35 words (KR):
-     → Split into 2 slides, OR
-     → Move supporting detail to appendix
-  6. IF < 15 words AND section is short → Merge with adjacent (SHORT-SECTION-MERGE)
-  7. VERIFY: slide body is NOT empty after distillation (CRITICAL CHECK)
-  8. VERIFY: presenter can read entire slide in ≤3 seconds
+   0. CLASSIFY content type: bullet list | paragraph | table | code | mixed
+   1. IF paragraph → Convert to keyword bullets FIRST (see Paragraph → Bullet above)
+   2. Extract Section Card insights (Phase 1.3)
+   3. Rewrite as keyword fragments (noun-phrase, no verbs, no filler)
+   4. Count total slide words
+   5. IF > 50 words (EN) / 35 words (KR):
+      → Split into 2 slides, OR
+      → Move supporting detail to appendix
+   6. IF < 15 words AND section is short → Merge with adjacent (SHORT-SECTION-MERGE)
+   7. VERIFY: slide body is NOT empty after distillation (CRITICAL CHECK)
+   8. VERIFY: presenter can read entire slide in ≤3 seconds
 ```
 
 ### Paragraph → Bullet Conversion Algorithm (Deterministic)
@@ -180,8 +182,8 @@ DEDUPLICATION ALGORITHM:
        overlap = title_words ∩ bullet_words
        IF overlap > 50% of bullet_words:
          → REWRITE bullet to provide supporting detail, not repeat the title
-    3. IF accent_candidate == primary_keyword:
-       → Choose a DIFFERENT word for accent (a metric, a proper noun, a delta)
+     3. IF accent_candidate == SectionCard.headline:
+        → Choose a DIFFERENT word for accent (a metric, a proper noun, a delta)
     4. IF footer/caption repeats title or bullet text:
        → Remove footer text OR replace with page-level context (section name, source)
 ```

@@ -1,32 +1,36 @@
 ---
 name: MaraudersPPT-Skill
 description: >
-  Converts Markdown documents into presentation-quality PowerPoint files (.pptx + .pdf).
-  Requires explicit "MaraudersMD2PPT" invocation — never self-activates.
+  Converts Markdown documents into presentation-quality PDF files.
+  Requires explicit "MaraudersMD2PPT" invocation - never self-activates.
+  Phase-based pipeline with Semantic Analysis, Narrative Architecture, and Visual Blueprint.
   Maps heading hierarchies, tables, code blocks, images, and AI Hint blocks to 23 slide
   layout types. Generates AI photorealistic images via native image generation (Cursor)
-  or background task delegation (OpenCode). Extracts core keywords to drive action titles,
-  accent words, and visual coverage. Fully supports Korean/CJK text with Pretendard font.
+  or background task delegation (OpenCode). Uses Section Cards and narrative roles to drive
+  action titles, accent words, visual coverage, and dual-output routing. Fully supports Korean/CJK
+  text with Pretendard font.
 license: MIT
 compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.3.2"
+  version: "2.0.0"
   author: "MaraudersPPT"
 ---
 
 # MaraudersPPT Skill
 
-Converts Markdown → presentation-quality PPTX + PDF. For detailed design specs see `docs/design-spec.md`.
+Converts Markdown -> presentation-quality PDF. For detailed design specs see `docs/design-spec.md`.
 
 | Reference | Contents |
 |-----------|----------|
-| [Keyword Extraction](references/keyword-extraction.md) | Core keyword extraction rules, per-section output, anti-patterns |
+| [Insight Extraction](references/insight-extraction.md) | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm |
 | [Content Distillation](references/content-distillation.md) | Slide text limits, bullet rules, distillation algorithm |
-| [Image Generation](references/image-generation.md) | Visual coverage audit, prompt derivation, layout adaptation |
+| [Cognitive Layout](references/cognitive-layout.md) | Eye-scanning patterns, Gestalt principles, pre-attentive attributes, spacing system |
+| [SVG Components](references/svg-components.md) | Inline SVG library: charts, icons, connectors, progress arcs, sparklines |
+| [Image Generation](references/image-generation.md) | 3-priority image system, Image Manifest cache, prompt derivation, layout adaptation |
 | [Layout Integrity](references/layout-integrity.md) | Safe areas, font metrics, verification checklist, golden rule |
-| [Parallel Execution](references/parallel-execution.md) | 5-wave architecture, Playwright batching, performance gains |
+| [Parallel Execution](references/parallel-execution.md) | 6-wave architecture, parallel render strategy, performance gains |
 | [Visual QA](references/visual-qa.md) | Post-generation visual inspection workflow |
 | [Design Spec](docs/design-spec.md) | Colors, typography, 8px grid, infographic CSS |
 | [PRD](docs/prd-md-to-pptx-skill.md) | Product requirements, acceptance criteria |
@@ -38,10 +42,10 @@ Converts Markdown → presentation-quality PPTX + PDF. For detailed design specs
 > **Hard gate. NOTHING runs without this.**
 
 ```
-BEFORE ANY OTHER STEP:
+BEFORE ANY OTHER PHASE:
   1. Scan user's message for "MaraudersMD2PPT" (case-insensitive)
-  2. IF FOUND → activation_status = "ACTIVATED" → Proceed to Step 0
-  3. IF NOT FOUND → HARD FAIL → Output failure message → STOP
+  2. IF FOUND -> activation_status = "ACTIVATED" -> Proceed to Phase 0
+  3. IF NOT FOUND -> HARD FAIL -> Output failure message -> STOP
 ```
 
 **On failure, output exactly:**
@@ -63,13 +67,13 @@ Without this keyword, the skill pipeline will not execute.
 |-------|---------|
 | `MaraudersMD2PPT docs/prd.md` ✅ | `Convert this markdown to PPT` ❌ |
 | `MaraudersMD2PPT run` ✅ | `Make this into a presentation` ❌ |
-| `Step 1: update, Step 2: MaraudersMD2PPT docs/prd.md` ✅ | `Use the pptx skill on this file` ❌ |
+| `Phase 1: update, Phase 2: MaraudersMD2PPT docs/prd.md` ✅ | `Use the slide skill on this file` ❌ |
 
 ---
 
 ## Execution Contract
 
-> Once activated, Steps 1–8 run to completion with **ZERO mid-flow confirmations**.
+> Once activated, Phases 0-5 run to completion with **ZERO mid-flow confirmations**.
 
 **PROHIBITED during pipeline:** "Should I continue?", "Do you want me to proceed?", "Ready to generate?", or any confirmation request. Zero confirmations in ALL environments.
 
@@ -82,9 +86,26 @@ environment:        "OpenCode" | "Cursor"
 
 ---
 
-## Pipeline Steps
+## Pipeline Phases
 
-### Step 0: Environment Detection
+### Phase 0: Input Contract + Environment Detection
+
+#### Phase 0.1 Input Contract
+
+All InputContract fields have sensible defaults. LLM infers from context if user does not specify.
+
+```yaml
+InputContract:
+  source_md: string
+  audience: enum [executive, team, external, mixed]  # default: team
+  goal: enum [persuade, inform, decide, inspire]      # default: inform
+  time_minutes: number                                 # default: 15
+  slide_budget: "auto" | number                        # auto = time_minutes × 1.5
+  tone: enum [bold, calm, urgent]                      # default: calm
+  cut_policy: enum [ruthless, balanced, preserve-all]  # default: balanced
+```
+
+#### Phase 0.2 Environment Detection
 
 | | OpenCode | Cursor / Antigravity |
 |--|----------|----------------------|
@@ -93,70 +114,121 @@ environment:        "OpenCode" | "Cursor"
 | Image generation | Background task via `task()` | Native image gen (Nano Banana Pro) |
 | Model switch? | No | **No** |
 
-All environments proceed immediately — no confirmation prompts.
+All environments proceed immediately - no confirmation prompts.
 
-### Step 1: Input Reception
+### Phase 1: Semantic Analysis (MD Parsing + Section Cards)
+
+#### Phase 1.1 Input Reception
 
 - Verify MD file path or receive inline MD text
 - Confirm file existence and encoding
-- **Collect ALL image paths** from MD (`![alt](path)`) — omission prohibited
+- **Collect ALL image paths** from MD (`![alt](path)`) - omission prohibited
 
-### Step 2: Markdown Parsing
+#### Phase 1.2 Markdown Parsing
 
-- H1 → document title, H2 → section separation, **H3 → sub-header within slide or slide split**
-- H3 mapping: If H2 section has 2+ H3 children with substantial content → split into separate slides per H3. If H3 content is light → use as **bold sub-header** within parent slide's body area.
+- H1 -> document title, H2 -> section separation, **H3 -> sub-header within slide or slide split**
+- H3 mapping: If H2 section has 2+ H3 children with substantial content -> split into separate slides per H3. If H3 content is light -> use as **bold sub-header** within parent slide's body area.
 - Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, **plain paragraphs**
-- **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets — NEVER silently deleted. Every paragraph produces ≥1 bullet.
-- **MARKDOWN SANITIZATION (MANDATORY)**: Run sanitization in **Step 2** (before Step 2.3 keyword extraction). Remove markdown syntax tokens from display text: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (``` / `), and raw link syntax (`[text](url)` → display text). Token leakage in rendered slide text is a CRITICAL BUG.
+- **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets - NEVER silently deleted. Every paragraph produces >=1 bullet.
+- **MARKDOWN SANITIZATION (MANDATORY)**: Run sanitization in **Phase 1** (before Section Card generation). Remove markdown syntax tokens from display text: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (``` / `), and raw link syntax (`[text](url)` -> display text). Token leakage in rendered slide text is a CRITICAL BUG.
 - **PARAGRAPH DETECTION RULE**: Plain paragraph = text block without markdown list markers (`-`, `*`, `+`, `1.`), blockquote marker (`>`), or code fence (```).
-- **URL/LINK HANDLING**: URLs in source MD → preserve as display text (shortened if >80 chars). Never discard links silently. Group multiple URLs into a dedicated links slide or footer area.
+- **URL/LINK HANDLING**: URLs in source MD -> preserve as display text (shortened if >80 chars). Never discard links silently. Group multiple URLs into a dedicated links slide or footer area.
 
-### Step 2.3: Core Keyword Extraction (CRITICAL)
+#### Phase 1.3 Section Card Generation
 
-> **The single most important step for quality.** Every slide is driven by extracted keywords, not raw text.
+> Every H2 section must produce one Section Card. Re-analyze weak cards before moving to narrative design.
 
-Extract `primary_keyword`, `accent_candidate`, `supporting_keywords`, `kpi_metrics` per section. **Full rules → [references/keyword-extraction.md](references/keyword-extraction.md)**
+```yaml
+SectionCard (per H2 section):
+  source_section: string          # "## Background"
+  claim: string                   # one-sentence argument this section makes
+  role: enum [problem, solution, evidence, context, meta]
+  stakes: enum [high, medium, low]
+  must_keep: boolean              # can the story work without this section?
+  insight: string                 # the audience's "aha" moment
+  headline: string                # action title candidate (<=15 words, with verb + conclusion)
+  evidence: string[]              # supporting data points
+  accent_candidate: string        # for Bold + #D94F4F (1 per slide max)
+  kpi_metrics: string[]           # executive summary candidates
+  source_lines: [number, number]  # line range in source MD
+  confidence: float               # 0.0-1.0, re-analyze if < 0.5
+```
 
-**Quick reference:**
+Full extraction rules: [references/insight-extraction.md](references/insight-extraction.md)
 
-| Output | Usage |
-|--------|-------|
-| `primary_keyword` | → Action title (sentence ≤15 words) |
-| `accent_candidate` | → Bold + `#D94F4F` (1 per slide, word-level) |
-| `supporting_keywords` | → Bold only, ranked first in bullets |
-| `kpi_metrics` | → Executive summary KPI cards |
-
-### Step 2.5: Visual Content Detection
+#### Phase 1.4 Visual Content Detection
 
 Auto-detect infographic candidates from text content:
 
 | Pattern | Visualization |
 |---------|--------------|
 | 3+ items with numbers | Bar Chart |
-| Percentages ≈ 100% | Donut Chart |
-| 3–8 sequential steps | Process Flow |
+| Percentages ~= 100% | Donut Chart |
+| 3-8 sequential steps | Process Flow |
 | Before/after comparison | Comparison |
-| 1–4 key metrics | KPI Cards |
-| 4–8 short items | Icon Grid |
+| 1-4 key metrics | KPI Cards |
+| 4-8 short items | Icon Grid |
 | Chronological events | Timeline |
 | Decreasing stages | Funnel |
 
-**Mode: AGGRESSIVE** — convert all mappable content. Use `templates/charts/` Python templates.
+**Mode: AGGRESSIVE** - convert all mappable content. Use `templates/charts/` Python templates.
 
-### Step 2.7: Executive Summary
+### Phase 2: Narrative Architecture (Story Arc + Slide Plan + Dual Output Routing)
 
-Auto-insert after title slide for 10+ slide decks. Content: 3–5 KPI metrics + 1-line conclusion.
+#### Phase 2.1 Story Arc Design
 
-### Step 2.8: Slide Flow Optimization
+Determine the deck-level narrative pattern from Section Card role distribution and user goal.
 
-- **MAX-2-TEXT**: 3rd consecutive text slide must be visual
-- **FRONT-VISUAL**: ≥1 infographic in first 30% of slides
-- **AUTO-APPENDIX**: Detailed tables (6+ rows) → appendix; summaries in main body
-- **SHORT-SECTION-MERGE**: Sections with ≤2 content lines (e.g., "License: MIT") → merge into previous slide as a footer/badge, or combine multiple short sections into one `icon-grid` / `highlight-card` slide. NEVER create a standalone slide for ≤15 words of body content.
+- `problem-solution`: dominant `problem` + `solution` + `evidence`
+- `journey`: chronology-heavy sections with transformation narrative
+- `comparison`: alternatives, tradeoffs, A/B framing
+- `showcase`: outcomes, capabilities, and impact-first storytelling
 
-### Step 2.9: Content Distillation (SLIDES ARE NOT DOCUMENTS)
+Story arc must be explicit before slide ordering begins.
 
-> **The presenter speaks. The slide shows keywords only.** Full rules → [references/content-distillation.md](references/content-distillation.md)
+#### Phase 2.2 Slide Role Taxonomy (7 Roles)
+
+Each slide must have exactly one narrative role.
+
+| Role | Purpose | Emotional Curve |
+|------|---------|----------------|
+| `hook` | Capture attention in first 15 seconds | Curiosity ↑ |
+| `problem` | Current situation pain points | Anxiety ↑ |
+| `insight` | "Why now" turning point | Realization |
+| `solution` | Core proposal | Hope ↑ |
+| `proof` | Data/case evidence | Trust ↑ |
+| `impact` | Results and vision | Confidence ↑ |
+| `cta` | Next action request | Resolution |
+
+#### Phase 2.3 Slide Plan
+
+Slide plan must include sequence, role assignment, source linkage, and routing decisions.
+
+```yaml
+slide_plan:
+  story_arc: "problem-solution"
+  slides:
+    - order: 1
+      role: "hook"
+      message: "결제 한 건에 3초 - 하루 10만 건이면 83시간을 버린다"
+      visual_intent: "dramatic-stat"
+      source_refs: ["section_card_1"]
+  cut_list:
+    - source: "## Dependencies"
+      reason: "Technical detail, not story-relevant"
+      destination: "appendix"    # appendix | speaker_notes | cut
+  coverage_report:
+    total_source_sections: 8
+    in_deck: 5
+    in_appendix: 2
+    in_speaker_notes: 1
+    truly_cut: 0
+    coverage_pct: "100%"
+```
+
+#### Phase 2.4: Content Distillation (SLIDES ARE NOT DOCUMENTS)
+
+> **The presenter speaks. The slide shows keywords only.** Full rules -> [references/content-distillation.md](references/content-distillation.md)
 
 **Hard limits:**
 
@@ -164,151 +236,214 @@ Auto-insert after title slide for 10+ slide decks. Content: 3–5 KPI metrics + 
 |--------|:-----------:|:------------:|:-----------------:|
 | `bullet-list` | 3 (max 4) | **7** | **50 EN / 35 KR** |
 | `image-text` | 3 | **5** | **50 EN / 35 KR** |
-| All others | — | — | **50 EN / 35 KR** |
+| All others | - | - | **50 EN / 35 KR** |
 
 **Korean/CJK: 0.7x multiplier.** Bullet = keyword fragment, NOT sentence.
 
-**⚠️ CONTENT PRESERVATION GUARANTEE**: Distillation means CONDENSE, never DELETE. **NEVER truncate with `...`** — rewrite as keyword fragment. **NEVER duplicate title text in body bullets** — title = conclusion, body = evidence.
+**⚠️ CONTENT PRESERVATION GUARANTEE**: Distillation means CONDENSE, never DELETE. **NEVER truncate with `...`** - rewrite as keyword fragment. **NEVER duplicate title text in body bullets** - title = conclusion, body = evidence.
 
 ```
 HIERARCHY (in order):
-  1. Condense → keyword fragments (ALWAYS try this first)
-  2. If too short to bullet → use as subtitle or caption text
-  3. If section has <15 words total → merge via SHORT-SECTION-MERGE (Step 2.8)
+  1. Condense -> keyword fragments (ALWAYS try this first)
+  2. If too short to bullet -> use as subtitle or caption text
+  3. If section has <15 words total -> merge via SHORT-SECTION-MERGE (Phase 2.6)
   4. ABSOLUTE PROHIBITION: A section that had content in the source MD
      must produce content on the slide. Zero-content slides = CRITICAL BUG.
 ```
 
-**Paragraph → Bullet Conversion** (for non-bullet source text):
+**Paragraph -> Bullet Conversion** (for non-bullet source text):
 ```
 Source paragraph: "This project is licensed under the MIT License."
-  → Bullet: • License: **MIT**
+  -> Bullet: • License: **MIT**
 
 Source paragraph: "Contributions are welcome. Please read the contributing guide."
-  → Bullet: • Contributions welcome — see guide
+  -> Bullet: • Contributions welcome - see guide
 
 Source paragraph: "Built with React, TypeScript, and Tailwind CSS for modern web development."
-  → Bullet: • Stack: **React** + TypeScript + Tailwind
+  -> Bullet: • Stack: **React** + TypeScript + Tailwind
 ```
 
-### Step 3: Slide Mapping
+#### Phase 2.5 Executive Summary
 
-- Determine layout per content block (23 types, see Layout Types below)
-- Max 2 topics/slide, max 4 bullets, max 5 table rows / 4 columns, max 12 code lines
+Auto-insert after title slide for 10+ slide decks. Content: 3-5 KPI metrics + 1-line conclusion.
 
-**Layout decision order (deterministic):**
-1. AI Hint block (`[AI RULE]`, `[AI DECISION]`, `[AI NOTE]`, `[AI CONTEXT]`) → `ai-hint`
-2. Code fence block (```) → `code`
-3. Table block (`| ... |`) → `table`
-4. Blockquote (`> ...`) → `quote`
-5. Explicit list (`-`, `*`, `+`, `1.`) → `bullet-list`
-6. Paragraph/prose → `text-body`
-7. Has original image + text → `image-text`; has image only → `image`
+#### Phase 2.6 Slide Flow Optimization
 
-**Empty Slide Guard (MANDATORY after mapping):**
+- **MAX-2-TEXT**: 3rd consecutive text slide must be visual
+- **FRONT-VISUAL**: >=1 infographic in first 30% of slides
+- **AUTO-APPENDIX**: Detailed tables (6+ rows) -> appendix; summaries in main body
+- **SHORT-SECTION-MERGE**: Sections with <=2 content lines (e.g., "License: MIT") -> merge into previous slide as a footer/badge, or combine multiple short sections into one `icon-grid` / `highlight-card` slide. NEVER create a standalone slide for <=15 words of body content.
+- **MOOD-ARC**: Deck emotional curve must progress tense -> hopeful -> confident.
+
+#### Phase 2.7 Dual Output Routing
+
+Every source section maps to exactly ONE destination:
+
 ```
-FOR each mapped slide:
-  IF slide.body_content is EMPTY or BLANK:
-    → CRITICAL ERROR — content was lost during distillation
-    → RECOVERY: Re-extract from source MD section
-    → IF source section also empty: merge with adjacent slide or remove slide entirely
-    → NEVER render a slide with title but no body/visual
-```
-
-### Step 4: Image Generation (MANDATORY)
-
-> **Every non-visual content slide MUST receive an AI-generated image.** Full rules → [references/image-generation.md](references/image-generation.md)
-
-**Quick reference:**
-- Slides with images/charts/code/tables → already visual ✅
-- `text-body`, `bullet-list`, `ai-hint`, `quote`, `checklist` without visuals → **MUST generate** ❌→✅
-- Prompt derived from `primary_keyword` → professional conceptual image
-- On generation: `text-body` → `image-text` layout switch (condense text for 50% width)
-- **0% text-only content slides allowed**
-- **HARD GATE**: If any non-visual content slide still has no visual after all generation retries, FAIL pipeline and STOP before output generation.
-- **EMPTY SLIDE CATCH (ordered recovery)**: If a slide reaches Step 4 with NO body content AND no visual, recover in this order: (1) re-extract source section, (2) convert paragraph to keyword bullet, (3) merge with adjacent slide if still empty, (4) generate image from section title + add section title as single-line body text.
-
-**Generation methods (3 priorities):**
-1. **Native image gen** (Cursor / Antigravity — built-in agent tool) or **background `task()`** (OpenCode) — AI-quality photorealistic images, saved to `assets/` directly
-2. **HTML concept visual + Playwright screenshot** — ALWAYS WORKS, no external API needed. Create styled HTML (gradient + abstract shapes + keyword) → screenshot as 1920×1080 PNG
-3. **SVG geometric placeholder + Sharp** — simplest fallback, minimal visual anchor
-
-**Image save & reference pipeline:**
-```
-1. mkdir -p "{output_dir}/assets"
-2. Save PNG: {output_dir}/assets/ai-img-{NN}-{label}.png
-3. In HTML slide: <img src="/absolute/path/to/assets/ai-img-01.png">
-4. html2pptx.js reads <img src> → PptxGenJS addImage({ path: ... })
-5. Verify: ls -la {output_path} (file exists, size > 0)
+"deck"           -> role is hook/problem/insight/solution/proof/impact/cta AND must_keep=true
+"appendix"       -> evidence with stakes=low, detailed tables 6+ rows, tech details
+"speaker_notes"  -> context sections that help presenter but do not need a slide
+"cut"            -> meta sections (license, contributing), confidence < 0.5
 ```
 
-### Step 5: HTML Slide Generation
+Routing is mandatory and audited in `.coverage-report.json`.
 
-- Individual HTML per slide, CSS inline, 16:9 at 1920×1080px
+### Phase 3: Visual Blueprint (Per-Slide Design + Deck Rhythm)
+
+#### Phase 3.1 Per-Slide Visual Blueprint
+
+> Eye-scanning rules, Gestalt principles, and spacing constraints -> [references/cognitive-layout.md](references/cognitive-layout.md)
+
+Each planned slide gets one visual blueprint before rendering.
+
+```yaml
+VisualBlueprint:
+  slide_id: number
+  role: string          # from Phase 2
+  message: string       # from Phase 2
+  eye_flow:
+    first: string       # what the eye sees first (hero_number, image, headline)
+    second: string
+    third: string
+  composition:
+    type: string        # hero-metric, single-statement, split-image-text, evidence-bullets, etc.
+    dominant_element: string  # number, image, text, chart
+  image_strategy:
+    need: enum [original-md, chart, ai-generated, none]
+    treatment: enum [background-10%, background-15%, left-50%, full-bleed, top-30%, none]
+    prompt_seed: string       # insight-based, not keyword-based
+    cache_lookup: object      # Image Manifest cache check
+  emphasis:
+    accent_word: string
+    bold_elements: string[]
+  template: string            # composition template name
+```
+
+#### Phase 3.2 Deck Rhythm
+
+```yaml
+DeckRhythm:
+  max_consecutive_same_density: 2
+  max_consecutive_same_dominant: 2
+  mood_arc_required: true
+  visual_variety_score: ">= 0.6"
+```
+
+Deck rhythm is validated before entering rendering.
+
+#### Phase 3.3 Visual Intent -> Layout Recipe Mapping
+
+| Visual Intent | Description | Layout Recipes |
+|--------------|-------------|----------------|
+| `dramatic-stat` | One shocking number | `hero-metric` / `kpi-cards` |
+| `contrast-comparison` | Before/after contrast | `comparison` / `bar-chart` |
+| `single-statement` | One powerful sentence | `quote-style` (28pt center) |
+| `evidence-grid` | Multiple evidence items | `kpi-cards` / `bullet-list` + image |
+| `process-reveal` | Step-by-step | `process-flow` / `timeline` |
+| `data-proof` | Data-driven proof | `bar-chart` / `donut-chart` / `table` |
+| `narrative-image` | Image tells the story | `image` / `image-text` |
+| `decision-point` | AI decision/rule highlight | `ai-hint` / `single-statement` |
+| `action-items` | Next steps | `closing` / `checklist` |
+
+### Phase 4: Rendering (HTML + Image + PDF)
+
+#### Phase 4.1 Image Handling - 3 Priority System
+
+```
+Priority 1: Original MD images -> copy to assets/, absolute path reference. NEVER replace.
+Priority 2: HTML code generation -> charts (templates/charts/), diagrams, compositions -> Playwright screenshot
+Priority 3: LLM image generation -> insight-based prompt -> Native gen (Cursor) / task() (OpenCode) / HTML concept fallback
+```
+
+#### Phase 4.2 Image Manifest (`.image-manifest.json`)
+
+- Cache generated images for reuse across re-runs
+- Hash-based: `content_hash` (AI images), `data_hash` (charts)
+- Skip regeneration on cache hit (unless user explicitly requests)
+- Full rules -> [references/image-generation.md](references/image-generation.md)
+
+#### Phase 4.3 HTML Slide Generation
+
+> Inline SVG patterns (charts, icons, connectors, sparklines) -> [references/svg-components.md](references/svg-components.md)
+
+- Individual HTML per slide, CSS inline, 16:9 at 1920x1080px
+- Composition templates for structured layouts
 - Pretendard font with fallback chain
+- Use SVG components for: curved shapes, arrow markers, trend lines, crisp icons at any scale
 
-### Step 6: PPTX Conversion
+#### Phase 4.4 PDF Rendering
 
-- Via `document-skills/pptx`'s `html2pptx.js`
-- Tables via PptxGenJS native table API
-- AI images via `<img>` tags
+- Playwright opens each HTML slide (1920x1080 viewport)
+- Renders each slide to a single-page PDF
+- All pages combined into final deck PDF
+- Tables, charts, images all rendered natively in HTML/CSS - pixel-perfect in PDF output
 
-### Step 7: Layout Integrity (ZERO TOLERANCE)
+### Phase 5: Verification + Output (Layout Integrity + Visual QA + Diagnostic)
 
-> Full rules → [references/layout-integrity.md](references/layout-integrity.md)
+#### Phase 5.1 Layout Integrity (ZERO TOLERANCE)
 
-**Key rules:**
-- Safe area: 68px margins, title ≤188px, body ≤944px
-- Font cascade: 18pt → 16pt (NEVER below 16pt) → reduce bullets → split slide
-- **Golden rule: If text overflows, the slide has too much text. Fix content, not layout.**
-- Max 3 regeneration attempts per slide
+> Full rules -> [references/layout-integrity.md](references/layout-integrity.md)
 
-### Step 8: Output & Diagnostic Report
+Key rules remain enforced: safe area boundaries, readable font floor, bullet reduction before split, and no overflow/overlap tolerance.
 
-> **Hard gates run BEFORE writing PPTX/PDF.** If any gate fails, STOP and report failures.
+#### Phase 5.2 Hard Gates
+
+> Hard gates run BEFORE writing PDF. If any gate fails, STOP and report failures.
 
 ```
 HARD GATES (must all pass):
   1) text_only_slide_ratio == 0%
   2) markdown_token_leakage_count == 0
   3) visual_coverage == 100%
+  4) coverage_pct == 100%
 
 IF any gate fails:
-  → pipeline_status = "FAILED"; do NOT write .pptx/.pdf
-  → output blocking error report with offending slide numbers
+  -> pipeline_status = "FAILED"; do NOT write .pdf
+  -> output blocking error report with offending slide numbers
 Metric scope: content_slides = all slides except `title`, `section-divider`, `appendix-divider`, `closing`; text_only_slide_ratio = text_only_content_slides / total_content_slides * 100; truncated_sentence_ratio = slides_with_ellipsis_in_title_or_body_or_caption / total_content_slides * 100
 ```
 
-```
-{original_filename}_pptx/
-├── v{M}.{m}_{original_filename}.pptx    ← Editable
-├── v{M}.{m}_{original_filename}.pdf     ← Primary output (static, no animations)
-└── assets/                               ← Generated charts/images
-```
-
-**Diagnostic report (MANDATORY in every completion message):**
+#### Phase 5.3 Output Structure
 
 ```
-📊 MaraudersMD2PPT Diagnostic Report
-─────────────────────────────────────
+{original_filename}_slides/
+├── v{M}.{m}_{original_filename}.pdf              ← Primary output (deck only)
+├── v{M}.{m}_{original_filename}_appendix.pdf     ← Appendix
+├── .image-manifest.json                           ← Image cache
+├── .coverage-report.json                          ← Content routing audit
+└── assets/                                        ← Generated charts/images
+```
+
+#### Phase 5.4 Diagnostic Report (MANDATORY in every completion message)
+
+```
+📊 MaraudersMD2PPT v2.0 Diagnostic Report
+─────────────────────────────────────────
 Activation:       ✅ ACTIVATED
 Pipeline Mode:    SKILL (full pipeline)
 Environment:      OpenCode | Cursor
-Steps Executed:   [✅] Steps 0–8 (list each)
+Input Contract:   audience={}, goal={}, time={}min, slides={}
+Phases Executed:  [✅] Phases 0-5 (list each)
+Narrative:
+  Story arc:       {arc_type}
+  Slide roles:     hook={}, problem={}, insight={}, solution={}, proof={}, impact={}, cta={}
+Content Coverage:
+  Source sections:  {total}
+  In deck:         {n} | In appendix: {n} | In notes: {n} | Cut: {n}
+  Coverage:        {pct}%
 Quality Metrics:
   Visual coverage:     {N}/{M} (target: 100%)
-  Text-only ratio:     {text_only_slide_ratio}% (target: 0%)
-  Token leakage count: {markdown_token_leakage_count} (target: 0)
-  Truncation ratio:    {truncated_sentence_ratio}% (target: 0%)
-  Duplicate ratio:     {duplicate_text_ratio}% (target: < 5%)
-  Content distillation: All ≤ 50w/35w
-  Layout violations:   0
+  Text-only ratio:     {pct}% (target: 0%)
+  Token leakage count: {n} (target: 0)
+  Truncation ratio:    {pct}% (target: 0%)
+  Duplicate ratio:     {pct}% (target: < 5%)
+  Image cache hits:    {n}/{total} (reused from manifest)
 Output: {filepath}
 ```
 
-### Step 9: Visual QA
+#### Phase 5.5 Visual QA
 
-> Full workflow → [references/visual-qa.md](references/visual-qa.md)
+> Full workflow -> [references/visual-qa.md](references/visual-qa.md)
 
 After generation, visually inspect slide thumbnails for rendering issues automated checks cannot detect: text overflow, font rendering, color accuracy, CJK glyph rendering, alignment consistency.
 
@@ -359,7 +494,7 @@ After generation, visually inspect slide thumbnails for rendering issues automat
 
 ### Output Language
 
-PPT language = source MD language. No translation.
+Slide language = source MD language. No translation.
 
 ### Slide Numbers
 
@@ -403,18 +538,18 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 ## Image Generation Pipeline
 
-> **MANDATORY for all slides without visual content.** Full details → [references/image-generation.md](references/image-generation.md)
+> **MANDATORY for all slides without visual content.** Full details -> [references/image-generation.md](references/image-generation.md)
 
 | Target | Method |
 |--------|--------|
-| Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) → Priority 2: HTML concept + Playwright → Priority 3: SVG + Sharp |
-| Charts/infographics | HTML templates (`templates/charts/`) → Playwright screenshot |
+| Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) -> Priority 2: HTML concept + Playwright -> Priority 3: LLM image generation fallback when native path unavailable |
+| Charts/infographics | HTML templates (`templates/charts/`) -> Playwright screenshot |
 | Diagrams/flowcharts | HTML/SVG |
 | Original MD images | Copy to `assets/`, reference via absolute path in HTML |
 
-**Pipeline**: Generate PNG → save to `{output_dir}/assets/` → reference in HTML via `<img src="/absolute/path/...">` → html2pptx.js embeds via PptxGenJS `addImage({ path })` → PPTX and PDF both render the image.
+**Pipeline**: Generate PNG -> save to `{output_dir}/assets/` -> reference in HTML via `<img src="/absolute/path/...">` -> Playwright renders HTML slides to PDF with all images embedded.
 
-**Priority 2 (HTML concept visual)** is the most reliable — works in ANY environment with only Playwright (already a dependency). It generates a styled gradient background with abstract shapes and the slide's keyword, then screenshots it as a 1920×1080 PNG.
+**Image Manifest rule**: Every generated visual writes metadata into `.image-manifest.json` (`content_hash`, `data_hash`, file path, timestamp). Cache hit reuses existing file unless user explicitly requests refresh.
 
 ---
 
@@ -422,10 +557,8 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 | Dependency | Role | Required |
 |-----------|------|----------|
-| `document-skills/pptx` | html2pptx engine, PptxGenJS API | **Required** |
 | Native image gen | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
 | `task()` background gen | OpenCode image generation via background agent | OpenCode only |
-| `pptxgenjs` | PowerPoint generation | **Required** (npm) |
 | `playwright` | HTML rendering / screenshots | **Required** (npm) |
 | `sharp` | Image post-processing | **Required** (npm) |
 
@@ -433,64 +566,68 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 ## Validation Checklist
 
-### Activation & Pipeline
+### Phase 0 (Input Contract)
 - [ ] `MaraudersMD2PPT` keyword found, `activation_status` == "ACTIVATED"
-- [ ] `pipeline_mode` == "SKILL" (never "GENERIC")
-- [ ] No mid-pipeline confirmations, diagnostic report included
+- [ ] `pipeline_mode` == "SKILL"
+- [ ] InputContract populated (defaults if not specified)
 
-### Keywords (Step 2.3)
-- [ ] Every section has `primary_keyword` and `accent_candidate`
-- [ ] Action titles from `primary_keyword` (≤15 words)
-- [ ] No unfocused slides (raw text dump prohibited)
+### Phase 1 (Semantic Analysis)
+- [ ] Every H2 section has a SectionCard with all 12 fields
+- [ ] Every SectionCard has role, claim, insight, must_keep
+- [ ] confidence >= 0.5 for all kept sections (re-analyze if below)
+- [ ] accent_candidate selected per section (1 per slide max)
+- [ ] Visual content detection applied (AGGRESSIVE mode)
+- [ ] Markdown sanitization applied (zero token leakage)
+- [ ] Paragraph preservation: all paragraphs -> keyword bullets
 
-### Content (Step 2.9)
-- [ ] Total slide text ≤ 50w EN / 35w KR
-- [ ] Bullets ≤ 3 (max 4), each ≤ 7 words — keyword fragments only
-- [ ] No full sentences, no filler words, CJK 0.7x applied
-- [ ] **ZERO empty slides** — every slide with a title has body content or visual
-- [ ] Plain paragraphs converted to keyword bullets (never deleted)
-- [ ] Short sections (≤2 lines) merged, not standalone slides
-
-### Visual Coverage (Step 4)
-- [ ] **0% text-only content slides**
-- [ ] AI images derived from `primary_keyword`
-- [ ] Layout adapted on image addition, text condensed
-
-### Hard-Gate Metrics
-- [ ] `text_only_slide_ratio == 0%`
-- [ ] `markdown_token_leakage_count == 0`
-- [ ] `truncated_sentence_ratio == 0%`
-- [ ] `duplicate_text_ratio < 5%`
-
-### Design
-- [ ] Accent `#D94F4F`: 1 per slide, word-level Bold only
-- [ ] Body ≥ 16pt, max 3 font sizes/slide
-- [ ] Margins ≥ 0.7", no overflow/overlap, 8px grid
-
-### Slide Flow
+### Phase 2 (Narrative Architecture)
+- [ ] Story arc determined and slides ordered by narrative role
+- [ ] Every slide has exactly one role from 7-role taxonomy
+- [ ] Cut list has reason + destination for every cut section
+- [ ] Coverage report: coverage_pct == 100%
+- [ ] Content distillation: all slides <= 50w EN / 35w KR
+- [ ] Bullets <= 3 (max 4), each <= 7 words, keyword fragments only
+- [ ] No ellipsis truncation, no title-body duplication
 - [ ] Executive summary present (10+ slides)
-- [ ] MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX, **SHORT-SECTION-MERGE** rules applied
-- [ ] CTA closing slide with Next Steps
+- [ ] MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX, SHORT-SECTION-MERGE applied
 
-### Charts
-- [ ] All chart text ≥ 16px, no uppercase, border-radius ≤ 2px
-- [ ] Grayscale base + 1 accent color
+### Phase 3 (Visual Blueprint)
+- [ ] Every slide has VisualBlueprint (eye_flow, composition, image_strategy)
+- [ ] Deck Rhythm validated (density variation, mood arc)
+- [ ] Visual Intent -> Layout Recipe mapping applied
+- [ ] Eye-scanning pattern (Z/F/Center) assigned per slide
+- [ ] Gestalt rules applied: proximity, similarity, continuity, figure-ground
+- [ ] Pre-attentive attribute (color, size, position) used for primary focus element
+
+### Phase 4 (Rendering)
+- [ ] Image priority respected: Original MD -> HTML code -> LLM gen
+- [ ] Image Manifest populated and cached
+- [ ] 0% text-only content slides
+- [ ] Layout adapted on image addition, text condensed
+- [ ] SVG used for: donut arcs, sparklines, arrow connectors, crisp icons
+
+### Phase 5 (Verification)
+- [ ] Hard gates: text_only=0%, token_leakage=0, coverage=100%
+- [ ] Layout integrity: no overflow, no overlap, margins respected
+- [ ] Diagnostic report included in completion message
 
 ---
 
 ## Parallel Execution
 
-> **Full architecture → [references/parallel-execution.md](references/parallel-execution.md)**
+> **Full architecture -> [references/parallel-execution.md](references/parallel-execution.md)**
 
-5-wave pipeline: Gate → Parse → Parallel (images + charts + HTML) → Collect → Assemble + Verify. AI image generation fires first (5–15s), charts render instantly (<100ms), slide HTML generates in foreground while background tasks complete.
+6-wave pipeline: Gate -> Semantic -> Narrative -> Blueprint -> Parallel Render -> Assemble+Verify.
+
+Parallel Render wave runs image generation, chart rendering, and HTML composition concurrently after blueprint lock. Assemble+Verify executes hard-gate validation, coverage audit, and final packaging.
 
 ---
 
-## Future Improvements (v1.1 Roadmap)
+## Future Improvements (Post v2.0)
 
 | Item | Description |
 |------|-------------|
-| `--audience` parameter | `executive` (12 slides, 3 bullets) / `team` (full detail) |
 | CSS Custom Properties | Theme switching via CSS variables |
-| Hero Metric Layout | Single dramatic number at 120px |
-| Slide Complexity Score | Auto-calculate cognitive complexity |
+| Slide Complexity Score | Auto-calculate cognitive complexity and density risk |
+| Interactive Presentation Mode | Optional branch for transitions and presenter interactions |
+| Multi-language Expansion | Language support beyond Korean/CJK with locale-aware typography |

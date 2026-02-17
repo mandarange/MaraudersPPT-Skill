@@ -1,54 +1,69 @@
-# Parallel Execution Optimization (Section 8)
+# Parallel Execution Optimization (6-Wave Architecture)
 
 > **For LLMs that support parallel sub-agent execution** (e.g., OpenCode with `task(run_in_background=true)`),
 > the workflow should be parallelized across independent tasks to minimize total conversion time.
 
 ## Wave Architecture
 
-The conversion pipeline is organized into **5 waves**. Tasks within each wave execute in parallel; waves execute sequentially.
+The conversion pipeline is organized into **6 waves**. Tasks within each wave execute in parallel; waves execute sequentially.
 
 ```
 Wave 0 — Gate (instant)
 └── Activation Guard: Verify MaraudersMD2PPT keyword → PASS or HARD FAIL
+└── Input Contract collection (defaults if not specified)
 
-Wave 1 — Sequential (fast, <1s)
-├── Step 0: Execution Contract + Environment Setup
-├── Step 1: Input Reception
-├── Step 2: MD Parsing
-├── Step 2.3: Core Keyword Extraction (CRITICAL)
-├── Step 2.5: Visual Content Detection
-├── Step 2.7: Executive Summary Generation
-├── Step 2.8: Slide Flow Optimization
-├── Step 2.9: Content Distillation
-└── Step 3: Slide Mapping
+Wave 1 — Sequential (LLM reasoning, ~5-10s)
+├── Phase 0: Environment Detection
+├── Phase 1.1: Input Reception
+├── Phase 1.2: MD Parsing
+├── Phase 1.3: Section Card Generation
+└── Phase 1.4: Visual Content Detection
 
-Wave 2 — PARALLEL (main bottleneck, optimize here)
-├── [Background] AI Image Generation — MANDATORY for ALL non-visual slides
+Wave 2 — Sequential (LLM reasoning, ~5-10s)
+├── Phase 2.1: Story Arc Design
+├── Phase 2.2: Slide Role Assignment (7-Role Taxonomy)
+├── Phase 2.3: Slide Plan Generation
+├── Phase 2.4: Content Distillation
+├── Phase 2.5: Executive Summary
+├── Phase 2.6: Slide Flow Optimization
+└── Phase 2.7: Dual Output Routing
+
+Wave 3 — Sequential (LLM reasoning, ~3-5s)
+└── Phase 3: Visual Blueprint Generation (per-slide + deck rhythm)
+
+Wave 4 — PARALLEL (main bottleneck, optimize here)
+├── [Background] Priority 3 AI Image Generation (insight-based prompts) — LONGEST, fire first
 ├── [Background] Chart HTML Generation (templates/charts/ → render_chart())
 ├── [Background] Chart Screenshot Capture (Playwright batch)
-└── [Foreground] Non-chart Slide HTML Generation
+└── [Foreground] Slide HTML Generation (composition templates)
 
-Wave 3 — PARALLEL (asset collection)
+Wave 5 — Sequential (assembly + verification)
 ├── Collect AI image results (background_output())
 ├── Collect chart screenshots
-└── Post-process images (Sharp resize/optimize if needed)
-
-Wave 4 — Sequential (assembly)
+├── Image Manifest update (.image-manifest.json)
 ├── Assemble all slide HTMLs with final assets
-├── Adapt layouts for slides receiving AI images (text-body → image-text, etc.)
-├── PPTX Conversion (html2pptx.js)
-└── PDF Generation (Playwright page.pdf())
-
-Wave 5 — Sequential (verification)
-├── Layout Integrity Verification (Step 7)
-├── Visual Coverage Audit (confirm 0% text-only content slides)
-├── Output file writing (versioned)
-└── Completion report + Diagnostic Report
+├── Layout adaptation for slides receiving images
+├── PDF Rendering (Playwright)
+├── PDF Generation (Playwright page.pdf())
+├── Appendix PDF Generation
+├── Layout Integrity Verification (Phase 5.1)
+├── Hard Gates check (Phase 5.2)
+├── Visual QA (Phase 5.5)
+├── Coverage Report generation
+└── Output file writing (versioned) + Diagnostic Report
 ```
 
-## Wave 2 Parallelization Detail
+## Wave Execution Model
 
-Wave 2 is the primary bottleneck. The following tasks are **fully independent** and should run concurrently:
+**Waves 1–3 (LLM Reasoning)**: Sequential, non-parallelizable. LLM must reason through semantic analysis, narrative architecture, and visual blueprint generation. These phases cannot be parallelized because each depends on the previous phase's output.
+
+**Wave 4 (I/O Bottleneck)**: Fully parallelizable. Image generation, chart rendering, and HTML composition are independent I/O operations. Fire longest tasks first (AI image generation takes 5–15s per image).
+
+**Wave 5 (Assembly)**: Sequential. Collects results from Wave 4, validates hard gates, and writes final outputs.
+
+## Wave 4 Parallelization Detail
+
+Wave 4 is the primary bottleneck. The following tasks are **fully independent** and should run concurrently:
 
 | Task | Agent/Method | Blocking? | Typical Duration |
 |------|-------------|-----------|-----------------|
@@ -57,20 +72,28 @@ Wave 2 is the primary bottleneck. The following tasks are **fully independent** 
 | Chart Screenshots | Playwright batch — one browser, multiple pages | No (background) | 1–3s per chart |
 | Slide HTML Generation | Sequential HTML file writes | Yes (foreground) | <1s per slide |
 
+**Image Manifest Cache Check**: Before firing AI image generation, check `.image-manifest.json` for cache hits. Skip generation for matching `content_hash` entries (unless user explicitly requests refresh).
+
 **Optimal execution pattern (OpenCode):**
 
 ```python
-# Wave 2: Fire all independent tasks in parallel
+# Wave 4: Fire all independent tasks in parallel
 
 # 1. AI Images — background (longest task, start first)
+# Check Image Manifest cache first
 image_tasks = []
 for slide in slides_needing_images:
-    tid = task(
-        run_in_background=True,
-        prompt=f"Generate photorealistic image: {slide.image_prompt}",
-        # ... native image gen (Cursor) or background agent (OpenCode)
-    )
-    image_tasks.append(tid)
+    cache_hit = check_image_manifest(slide.image_key)
+    if cache_hit:
+        # Reuse cached image
+        image_tasks.append({"cached": True, "path": cache_hit["path"]})
+    else:
+        # Generate new image
+        tid = task(
+            run_in_background=True,
+            prompt=f"Generate photorealistic image: {slide.image_prompt}",
+        )
+        image_tasks.append({"cached": False, "task_id": tid})
 
 # 2. Chart rendering — instant, no background needed
 chart_htmls = {}
@@ -83,10 +106,14 @@ chart_screenshots = batch_screenshot(chart_htmls)  # Playwright
 # 4. Non-chart slide HTMLs — generate while charts render
 slide_htmls = generate_slide_htmls(mapped_slides)
 
-# Wave 3: Collect background results
-for tid in image_tasks:
-    result = background_output(task_id=tid)
-    # Insert into corresponding slide
+# Wave 5: Collect background results
+for item in image_tasks:
+    if item["cached"]:
+        # Use cached path
+        pass
+    else:
+        result = background_output(task_id=item["task_id"])
+        # Insert into corresponding slide
 ```
 
 ## Playwright Batch Screenshot Optimization
@@ -130,8 +157,8 @@ for (const html of chartHtmls) {
 
 | Document Size | Sequential | Parallel (OpenCode) | Speedup |
 |--------------|-----------|-------------------|---------|
-| Small (<50 lines, 0 images) | ~15s | ~10s | 1.5× |
-| Medium (50–300 lines, 2–3 images) | ~45s | ~20s | 2.2× |
-| Large (300+ lines, 5+ images) | ~120s | ~35s | 3.4× |
+| Small (<50 lines, 0 images) | ~12s | ~10s | 1.2× |
+| Medium (50–300 lines, 2–3 images) | ~40s | ~18s | 2.2× |
+| Large (300+ lines, 5+ images) | ~110s | ~32s | 3.4× |
 
-> **Note**: Speedup is primarily from overlapping AI image generation with slide HTML generation. Chart rendering is already fast (<100ms) and contributes minimal savings.
+> **Note**: Speedup is primarily from overlapping AI image generation with slide HTML generation and chart rendering. Chart rendering is already fast (<100ms) and contributes minimal savings. Image Manifest cache hits further reduce Wave 4 duration.

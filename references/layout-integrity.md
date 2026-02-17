@@ -1,8 +1,8 @@
-# Layout Integrity Verification (Step 7)
+# Layout Integrity Verification (Phase 5.1)
 
 > **The layout system must NEVER break. Text overflow is a CRITICAL failure.**
-> If Step 2.9 (Content Distillation) worked correctly, overflow should be impossible.
-> This step is the final safety net — NOT the primary defense.
+> If Phase 2.4 (Content Distillation) worked correctly, overflow should be impossible.
+> This phase is the final safety net — NOT the primary defense.
 
 ## 7.1 Safe Area Dimensions (Pixel-Based)
 
@@ -62,7 +62,7 @@ Based on Pretendard font metrics at standard sizes:
 
 ## 7.4 Font Reduction Cascade (Last Resort Only)
 
-> If Step 2.9 pre-check worked, this cascade should RARELY trigger.
+> If Phase 2.4 pre-check worked, this cascade should RARELY trigger.
 
 ```
 Step 1: Body 18pt → 16pt (ABSOLUTE minimum — NEVER below 16pt)
@@ -134,8 +134,20 @@ Step 5: Force slide split (create continuation slide)
 
 ```
 IF text overflows the slide:
-  THE SLIDE HAS TOO MUCH TEXT. Period.
-  Go back to Step 2.9 and distill the content further.
-  Reducing font size to fit more text is NEVER the answer.
-  A slide with 16pt text crammed wall-to-wall is worse than overflow.
+   THE SLIDE HAS TOO MUCH TEXT. Period.
+   Go back to Phase 2.4 and distill the content further.
+   Reducing font size to fit more text is NEVER the answer.
+   A slide with 16pt text crammed wall-to-wall is worse than overflow.
 ```
+
+## 7.7 Visual Blueprint Validation
+
+After Phase 3 generates Visual Blueprints, validate:
+
+| # | Check | On Failure |
+|---|-------|-----------|
+| 1 | Composition `dominant_element` fits within body area | Re-select composition type |
+| 2 | `eye_flow.first` element within center 80% of slide | Reposition focal point |
+| 3 | Image `treatment` compatible with composition `type` | Adjust treatment or composition |
+| 4 | Deck rhythm score >= 0.6 | Swap adjacent slide compositions for variety |
+

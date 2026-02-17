@@ -112,7 +112,7 @@ Used for borders/lines ← Do not apply to structural elements
 
 ### 3.2 Fallback Chain
 
-Embed Pretendard in PPTX, but fallback for non-installed environments:
+Embed Pretendard in PDF, but fallback for non-installed environments:
 
 ```
 Pretendard → Apple SD Gothic Neo → Malgun Gothic → Noto Sans KR → sans-serif
@@ -162,12 +162,9 @@ Create a dedicated folder in the **same path** as the original MD file and accum
 ```
 docs/
 ├── prd.md ← Original Markdown file
-└── prd_pptx/ ← Auto-generated folder ({file name}_pptx/)
-├── v1.0_prd.pptx ← Editable PowerPoint
+└── prd_slides/ ← Auto-generated folder ({file name}_slides/)
 ├── v1.0_prd.pdf ← For sharing/archive PDF
-    ├── v1.1_prd.pptx
     ├── v1.1_prd.pdf
-    ├── v2.0_prd.pptx
     ├── v2.0_prd.pdf
 └── assets/ ← Generated charts/images (temporary)
         ├── chart-01-revenue.png
@@ -177,14 +174,14 @@ docs/
 ### 4.2 Folder naming rules
 
 ```
-{Original file name (excluding extension)}_pptx/
+{Original file name (excluding extension)}_slides/
 ```
 
 |original file|Generate folder|
 |----------|----------|
-| `docs/prd.md` | `docs/prd_pptx/` |
-| `design/wireframe.md` | `design/wireframe_pptx/` |
-| `reports/q4-review.md` | `reports/q4-review_pptx/` |
+| `docs/prd.md` | `docs/prd_slides/` |
+| `design/wireframe.md` | `design/wireframe_slides/` |
+| `reports/q4-review.md` | `reports/q4-review_slides/` |
 
 ---
 
@@ -195,7 +192,7 @@ docs/
 |Item|Value|Note|
 |------|-----|------|
 |ratio| **16:9** |fix. 4:3 not supported|
-|Dimensions (PPT)| 13.333" × 7.5" (33.87cm × 19.05cm) |PowerPoint standard 16:9|
+|Dimensions (Slide)| 13.333" × 7.5" (33.87cm × 19.05cm) |Standard 16:9|
 |HTML Render Resolution| **1920 × 1080 px** |Full HD. Large monitor compatible|
 |Margin (top, bottom, left and right)|**Minimum 0.7"** (1.78cm)|Content area is placed inside only|
 |title area height|Top 15%|Slide top fixed position|
@@ -760,7 +757,7 @@ Response: base64 PNG inline data → decode → save assets/
 |file size|5MB or less|
 |style|`photorealistic` Default. Design Palette Grayscale Tone Priority|
 |Color Compliance|Refrain from strong colors — visual harmony with the slide palette (Section 2)|
-|Save location|`{source_filename}_pptx/assets/ai-img-{nn}-{label}.png`|
+|Save location|`{source_filename}_slides/assets/ai-img-{nn}-{label}.png`|
 
 #### 9.4.4 Prompt Creation Rules
 
@@ -790,8 +787,7 @@ Response: base64 PNG inline data → decode → save assets/
 For each Generate, **2 files** are output simultaneously (stored according to the Section 4 folder structure):
 
 ```
-{original file name}_pptx/
-├── v1.0_{original file name}.pptx ← Editable PowerPoint
+{original file name}_slides/
 └── v1.0_{original file name}.pdf ← For sharing/archive PDF
 ```
 
@@ -940,12 +936,12 @@ After generating each slide, check the following items:
 ### 15.1 Core principles
 
 > **Charts and infographics are implemented using HTML and inserted as images.**
-> Instead of PptxGenJS native charts, gain full design control with HTML+CSS.
+> Charts are rendered entirely with HTML+CSS, preserving full design control.
 
 ### 15.2 Rendering Pipeline
 
 ```
-[Data] → [HTML chart generation] → [Playwright Screenshot] → [PNG Image] → [PPTX Insert]
+[Data] → [HTML chart generation] → [Playwright Screenshot] → [PNG Image] → [PDF Slide]
 (CSS inline) (1920×1080px) (assets/save) (<img> tag)
 ```
 
@@ -953,8 +949,8 @@ After generating each slide, check the following items:
 |------|------|
 | 1. HTML Generate |Implement charts as pure HTML+CSS or as a lightweight library (Chart.js, etc.)|
 |2. Screenshot|Render 1920×1080px with Playwright → Capture PNG|
-|3. Save|`{source_filename}_pptx/assets/chart-{nn}-{label}.png`|
-|4. Insert|html2pptx slide HTML to `<img src="assets/chart-01-revenue.png">`|
+|3. Save|`{source_filename}_slides/assets/chart-{nn}-{label}.png`|
+|4. Insert|Insert into HTML slide via `<img src="assets/chart-01-revenue.png">`, then render with Playwright-based PDF rendering|
 
 ### 15.3 Chart Design Rules
 
@@ -2071,17 +2067,15 @@ If multiple patterns are matched simultaneously, the final template is decided i
 
 |Skill|Role|Required?|
 |------|------|----------|
-| `document-skills/pptx` |html2pptx rendering engine, PptxGenJS API|**essential**|
 | `NanoBanana Pro` |Gemini CLI Extension — Generate AI photorealistic images|**Conditional** (when image generation is required)|
 | `Gemini 2.5 Flash Image API` |NanoBanana Pro fallback — calling API directly|Choice (fallback)|
 | `theme-factory` |See theme presets (override with your design philosophy when using)|select|
 
-### 16.2 Document-skills/pptx usage rules
+### 16.2 Playwright PDF rendering usage rules
 
 |Function|Usage|Notes|
 |------|--------|------|
-| html2pptx.js |Each slide HTML → PPTX conversion|HTML body: `720pt × 405pt` (html2pptx standard)|
-| PptxGenJS table |Generate native table|`class="placeholder"` area designation|
+| Playwright PDF renderer |Each slide HTML → PDF rendering|HTML/CSS is the single source of truth for layout and visuals|
 | Playwright |HTML Screenshot (for charts)|Charts are rendered separately at 1920×1080px|
 | Sharp |Image post-processing (rasterization)|When converting Gradient/SVG → PNG|
 
@@ -2103,7 +2097,7 @@ All External Skill Output **MUST** comply with the following:
 |------|--------|------|
 |CLI Image Generation| `/generate "prompt" --count=1 --styles="photorealistic"` | Output: `./nanobanana-output/` |
 | TypeScript API | `ImageGenerator.generateTextToImage(request)` |Use Gemini `gemini-2.5-flash-image` model|
-|Image post-processing|After Generate → Check resolution → Copy `assets/` → Insert PPTX|Resize if less than 1920×1080|
+|Image post-processing|After Generate → Check resolution → Copy `assets/` → Insert into HTML slide|Resize if less than 1920×1080|
 | Fallback |If NanoBanana Pro fails → Gemini API Direct call|decode base64 PNG → save file|
 
 > **Principle**: NanoBanana Pro Output must also comply with Section 2 (color), Section 9.2 (quality standards), and Section 5.5 (layout integrity).
@@ -2117,7 +2111,7 @@ All External Skill Output **MUST** comply with the following:
 > **Gemini Pro** (`gemini-2.5-pro`) model is required to generate AI images.
 > The model conversion method varies depending on the IDE environment.
 
-|Environment|Image Generation Model|PPT Conversion Model|Model Switching|
+|Environment|Image Generation Model|PDF Rendering Model|Model Switching|
 |------|----------------|--------------|---------------|
 |**Cursor** (non-OpenCode)| Gemini Pro |Gemini Pro (All)|Manually switch users (pre-check)|
 | **OpenCode** |Gemini Pro (background)|Maintain user selection model|Automatic background task|
@@ -2152,7 +2146,7 @@ In OpenCode, only image generate is executed as a separate model through a backg
 #### Main pipeline (user-selected model)
 
 ```
-MD Parse → Slide Map → HTML Generate → PPTX Conversion → Layout Verification
+MD Parse → Slide Map → HTML Generate → PDF Rendering → Layout Verification
 ```
 
 #### Generate image (background — Gemini Pro)
@@ -2164,7 +2158,7 @@ Step 3: Spawn background task (Gemini Pro model)
         → task(run_in_background=true)
 Step 4: Run NanoBanana Pro /generate in the background
 Step 5: Save Generate results to assets/
-Step 6: The main pipeline collects results using background_output() and inserts them into PPTX.
+Step 6: The main pipeline collects results using background_output() and inserts them into HTML slides for PDF rendering.
 ```
 
 ### 17.4 Environmental Sensing Methods
@@ -2190,7 +2184,7 @@ If not available → Cursor workflow (17.2) applied.
 |Weight number|Level 9: Thin(100) ~ Black(900)|
 |Supported languages|182 (including Korean, English, Japanese, Chinese)|
 |Adoption example|Korean government official UI/UX design system (2024~)|
-|Embed PPT|Support (TTF/OTF → PPTX font embedding)|
+|Embed PDF|Support (TTF/OTF → PDF font embedding)|
 
 ---
 
@@ -2235,3 +2229,345 @@ If not available → Cursor workflow (17.2) applied.
 |Different fonts for titles only|Pretendard Maintain single font consistency. Additional fonts increase embedding costs|
 |Dramatic Reveal Layout|Conflict with information-oriented philosophy. Risks beyond the presenter’s control|
 |Asymmetric hero slides|Concerns about loss of grid alignment consistency. Reviewed in future v2.0|
+
+## 18) Composition Templates
+
+> **Composition templates define how slide elements are arranged to match the visual intent from Phase 3.**
+> They extend the chart template system (Section 15) to cover all slide types, not just data visualization.
+
+### 18.1 Composition Catalog
+
+| Composition | Description | Key CSS Properties |
+|------------|-------------|-------------------|
+| `hero-metric` | One dominant number, center stage | `.hero-number { font-size: 120px; font-weight: 800; }` |
+| `split-image-text` | Image left 50%, text right 50% | `.split-container { display: grid; grid-template-columns: 1fr 1fr; }` |
+| `evidence-bullets` | Title + 3-4 evidence bullets + accent | Standard bullet layout with accent highlight |
+| `single-statement` | One sentence, centered, 28pt | `.statement { font-size: 28pt; text-align: center; max-width: 80%; }` |
+| `comparison-grid` | 2-column comparison | Extends `.comparison` from Section 15.7.6 |
+| `data-dashboard` | KPI cards + supporting chart | `.dashboard { display: grid; grid-template-columns: 1fr 2fr; }` |
+| `narrative-image` | Full-bleed or dominant image with overlay text | `.narrative { position: relative; }` + overlay positioning |
+| `action-close` | CTA with steps + contact | Extends `.closing` layout |
+
+### 18.2 Shared Composition Contract
+
+- All templates are rendered on a 1920x1080 canvas and must respect the Section 5 safe area.
+- All spacing follows the 8px grid in Section 5.3.
+- Accent usage stays within Section 2 palette constraints and word-level emphasis rules.
+- Composition selection is driven by VisualBlueprint `composition.type` from Phase 3.
+- Chart-bearing compositions reuse Section 15 chart CSS primitives without style divergence.
+
+### 18.3 Template Specs
+
+#### 18.3.1 `hero-metric`
+
+- CSS classes: `.hero-metric`, `.hero-number`, `.hero-label`, `.hero-support`.
+- Visual intent mapping: `dramatic-stat`, `data-proof` (single KPI focus), `impact`.
+- Sizing rules: hero number target 120px, minimum 96px; support text 22-28px; center block width 60-72%.
+
+```html
+<section class="slide hero-metric">
+  <p class="hero-label">Cost Reduction</p>
+  <h1 class="hero-number">37%</h1>
+  <p class="hero-support">Year-over-year operating margin expansion</p>
+</section>
+```
+
+```css
+.hero-metric { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
+.hero-number { font-size: 120px; font-weight: 800; line-height: 1.0; letter-spacing: -1px; }
+.hero-label { font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+.hero-support { font-size: 24px; max-width: 70%; text-align: center; margin-top: 12px; }
+```
+
+#### 18.3.2 `split-image-text`
+
+- CSS classes: `.split-container`, `.split-image`, `.split-text`, `.split-title`, `.split-bullets`.
+- Visual intent mapping: `narrative-image`, `contrast-comparison` (image-first), `solution`.
+- Sizing rules: image area 50% width fixed; text area 50%; title up to 2 lines; bullets max 4.
+
+```html
+<section class="slide split-container">
+  <figure class="split-image"><img src="assets/scene.png" alt="Context image" /></figure>
+  <div class="split-text">
+    <h2 class="split-title">Regional Distribution Constraint</h2>
+    <ul class="split-bullets"><li>Warehouse capacity at 92%</li><li>Lead time variance +18%</li></ul>
+  </div>
+</section>
+```
+
+```css
+.split-container { display: grid; grid-template-columns: 1fr 1fr; height: 100%; }
+.split-image img { width: 100%; height: 100%; object-fit: cover; }
+.split-text { padding: 72px 80px 72px 64px; display: flex; flex-direction: column; justify-content: center; }
+.split-title { font-size: 42px; line-height: 1.2; margin-bottom: 24px; }
+.split-bullets li { font-size: 24px; margin-bottom: 16px; }
+```
+
+#### 18.3.3 `evidence-bullets`
+
+- CSS classes: `.evidence-layout`, `.evidence-title`, `.evidence-list`, `.evidence-item`, `.evidence-accent`.
+- Visual intent mapping: `evidence-grid`, `data-proof`, `problem`.
+- Sizing rules: 3-4 bullets preferred; each bullet max 2 lines; highlight one phrase with accent class.
+
+```html
+<section class="slide evidence-layout">
+  <h2 class="evidence-title">Why This Matters Now</h2>
+  <ul class="evidence-list">
+    <li class="evidence-item">Churn risk increased by <span class="evidence-accent">12%</span> in Q3</li>
+    <li class="evidence-item">Top 2 segments explain 74% of lost revenue</li>
+    <li class="evidence-item">Escalations doubled after SLA drift exceeded 48h</li>
+  </ul>
+</section>
+```
+
+```css
+.evidence-layout { padding: 96px 120px; display: flex; flex-direction: column; justify-content: flex-start; }
+.evidence-title { font-size: 48px; margin-bottom: 32px; }
+.evidence-list { list-style: disc; padding-left: 36px; }
+.evidence-item { font-size: 28px; line-height: 1.5; margin-bottom: 16px; }
+.evidence-accent { color: var(--accent-red); font-weight: 700; }
+```
+
+#### 18.3.4 `single-statement`
+
+- CSS classes: `.statement-layout`, `.statement`.
+- Visual intent mapping: `single-statement`, `decision-point`, `hook`.
+- Sizing rules: statement font 28pt baseline; maximum width 80%; no supporting bullets.
+
+```html
+<section class="slide statement-layout">
+  <p class="statement">Execution speed is now a competitive moat, not an operational preference.</p>
+</section>
+```
+
+```css
+.statement-layout { display: flex; justify-content: center; align-items: center; height: 100%; }
+.statement { font-size: 28pt; text-align: center; max-width: 80%; line-height: 1.45; font-weight: 600; }
+```
+
+#### 18.3.5 `comparison-grid`
+
+- CSS classes: `.comparison-grid`, `.comparison-col`, `.comparison-head`, `.comparison-body`.
+- Visual intent mapping: `contrast-comparison`, `decision-point`, `solution`.
+- Sizing rules: two equal columns; each column max 4 bullets; equal vertical padding.
+- Extension rule: use Section 15.7.6 `.comparison` as base and only override spacing/heading scale.
+
+```html
+<section class="slide comparison-grid comparison">
+  <article class="comparison-col"><h3 class="comparison-head">Current State</h3><ul class="comparison-body"><li>Manual routing</li></ul></article>
+  <article class="comparison-col"><h3 class="comparison-head">Target State</h3><ul class="comparison-body"><li>Policy-driven automation</li></ul></article>
+</section>
+```
+
+```css
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding: 80px 96px; }
+.comparison-head { font-size: 32px; margin-bottom: 20px; }
+.comparison-body li { font-size: 24px; margin-bottom: 14px; }
+```
+
+#### 18.3.6 `data-dashboard`
+
+- CSS classes: `.dashboard`, `.dashboard-kpis`, `.dashboard-chart`, `.kpi-stack`.
+- Visual intent mapping: `data-proof`, `evidence-grid`, `impact`.
+- Sizing rules: 1:2 column ratio; KPI stack left with 2-4 cards; chart area right centered.
+- Extension rule: `dashboard-kpis` should reuse Section 15.7.1 `kpi_cards` dimensions where applicable.
+
+```html
+<section class="slide dashboard">
+  <aside class="dashboard-kpis kpi-stack">...</aside>
+  <div class="dashboard-chart"><img src="assets/chart.png" alt="Supporting chart" /></div>
+</section>
+```
+
+```css
+.dashboard { display: grid; grid-template-columns: 1fr 2fr; gap: 28px; height: 100%; padding: 72px 88px; }
+.dashboard-kpis { display: grid; grid-template-rows: repeat(3, 1fr); gap: 16px; }
+.dashboard-chart { display: flex; align-items: center; justify-content: center; }
+.dashboard-chart img { max-width: 100%; max-height: 88%; object-fit: contain; }
+```
+
+#### 18.3.7 `narrative-image`
+
+- CSS classes: `.narrative`, `.narrative-image`, `.narrative-overlay`, `.narrative-title`, `.narrative-caption`.
+- Visual intent mapping: `narrative-image`, `hook`, `impact`.
+- Sizing rules: image dominant (full-bleed or >=70% visual area); overlay text width 40-55%.
+
+```html
+<section class="slide narrative">
+  <img class="narrative-image" src="assets/story.png" alt="Narrative scene" />
+  <div class="narrative-overlay">
+    <h2 class="narrative-title">The Network Broke Before Demand Peaked</h2>
+    <p class="narrative-caption">Three hubs exceeded safe throughput in 9 days.</p>
+  </div>
+</section>
+```
+
+```css
+.narrative { position: relative; width: 100%; height: 100%; }
+.narrative-image { width: 100%; height: 100%; object-fit: cover; }
+.narrative-overlay { position: absolute; left: 96px; bottom: 88px; max-width: 52%; padding: 24px 28px; background: rgba(255,255,255,0.86); }
+.narrative-title { font-size: 44px; line-height: 1.2; margin-bottom: 12px; }
+.narrative-caption { font-size: 24px; line-height: 1.4; }
+```
+
+#### 18.3.8 `action-close`
+
+- CSS classes: `.action-close`, `.action-title`, `.action-steps`, `.action-contact`.
+- Visual intent mapping: `action-items`, `cta`, `closing`.
+- Sizing rules: title 40-48px; steps 3-4 items; contact block anchored lower-right.
+- Extension rule: base layout from closing template in Section 15 and Section 14 closing guidance.
+
+```html
+<section class="slide action-close closing">
+  <h2 class="action-title">Decide Today, Capture Q2 Benefit</h2>
+  <ol class="action-steps"><li>Approve pilot scope</li><li>Assign owners</li><li>Launch in 30 days</li></ol>
+  <p class="action-contact">PMO Lead: strategy@company.com</p>
+</section>
+```
+
+```css
+.action-close { position: relative; padding: 88px 112px; height: 100%; }
+.action-title { font-size: 44px; margin-bottom: 28px; }
+.action-steps li { font-size: 26px; margin-bottom: 14px; }
+.action-contact { position: absolute; right: 112px; bottom: 72px; font-size: 20px; }
+```
+
+## 19) Visual Blueprint Schema
+
+> **Every slide gets a Visual Blueprint before rendering begins.**
+> The blueprint drives layout selection, image strategy, and emphasis placement.
+
+### 19.1 Source of Truth
+
+- This schema is aligned with SKILL.md Phase 3 and is authoritative for design-to-render handoff.
+- Phase 2 provides role and message inputs; Phase 3 converts them into layout-ready blueprint objects.
+- Rendering in Phase 4 must not bypass blueprint decisions except for hard-gate remediation.
+
+### 19.2 VisualBlueprint Schema (Per Slide)
+
+```yaml
+VisualBlueprint:
+  slide_id: number
+  role: string                  # from Phase 2 narrative role
+  message: string               # from Phase 2 distilled message
+  visual_intent: string         # dramatic-stat, data-proof, narrative-image, action-items, etc.
+  eye_flow:
+    first: string               # hero_number | image | headline | chart
+    second: string
+    third: string
+  composition:
+    type: string                # hero-metric, split-image-text, evidence-bullets, single-statement, ...
+    dominant_element: string    # number | image | text | chart
+    template_class: string      # CSS root class from Section 18 and Section 15
+  image_strategy:
+    need: enum [original-md, chart, ai-generated, none]
+    treatment: enum [full-bleed, background-10%, background-15%, left-50%, top-30%, chart-centered, none]
+    prompt_seed: string         # insight-based phrase, never keyword-only
+    cache_lookup:
+      image_key: string
+      hit: boolean
+  emphasis:
+    accent_word: string
+    bold_elements: string[]
+  template: string              # final layout template key used by renderer
+```
+
+### 19.3 DeckRhythm Validation Rules
+
+```yaml
+DeckRhythm:
+  max_consecutive_same_density: 2
+  max_consecutive_same_dominant: 2
+  mood_arc_required: true
+  visual_variety_score: ">= 0.6"
+```
+
+- `max_consecutive_same_density`: no more than 2 dense text-heavy slides in sequence.
+- `max_consecutive_same_dominant`: no more than 2 slides where the same dominant element repeats.
+- `mood_arc_required`: narrative should progress tense -> hopeful -> confident.
+- `visual_variety_score >= 0.6`: measured across composition switches, dominant element shifts, and image treatment diversity.
+
+### 19.4 Visual Intent -> Layout Recipe Mapping
+
+| Visual Intent | Layout Recipe | Primary CSS Class | Reference |
+|--------------|---------------|-------------------|-----------|
+| `dramatic-stat` | `hero-metric` or `kpi_cards` | `.hero-metric` / chart classes | Section 18.3.1, Section 15.7.1 |
+| `contrast-comparison` | `comparison-grid` or `comparison` | `.comparison-grid` / `.comparison` | Section 18.3.5, Section 15.7.6 |
+| `single-statement` | `single-statement` | `.statement-layout` | Section 18.3.4 |
+| `evidence-grid` | `evidence-bullets` or `data-dashboard` | `.evidence-layout` / `.dashboard` | Section 18.3.3, Section 18.3.6 |
+| `process-reveal` | `process_flow` or `timeline` | chart template classes | Section 15.7.4, Section 15.7.5 |
+| `data-proof` | `data-dashboard`, `bar_chart`, `donut_chart`, `table` | `.dashboard` / chart classes | Section 18.3.6, Section 15.7.2, Section 15.7.3 |
+| `narrative-image` | `narrative-image` or `split-image-text` | `.narrative` / `.split-container` | Section 18.3.7, Section 18.3.2 |
+| `decision-point` | `single-statement` or `comparison-grid` | `.statement-layout` / `.comparison-grid` | Section 18.3.4, Section 18.3.5 |
+| `action-items` | `action-close` or `closing` | `.action-close` / `.closing` | Section 18.3.8, Section 15 closing layouts |
+
+### 19.5 Eye-Flow Patterns
+
+| Pattern | Use Case | Ordered Eye Flow |
+|---------|----------|------------------|
+| `z-pattern` | Default mixed-content slides | headline -> visual proof -> action/insight |
+| `f-pattern` | Text-heavy evidence slides | headline -> left bullets -> right support |
+| `center-focus` | Hero metric or single statement | center hero -> support line -> source/note |
+
+- `z-pattern` is default when no explicit override is present in blueprint.
+- `f-pattern` is selected when bullet density is high and charts are secondary.
+- `center-focus` is required for `hero-metric` and recommended for `single-statement`.
+
+### 19.6 Composition Selection Decision Tree
+
+```text
+1) Determine visual_intent from Phase 2 role + message
+2) If visual_intent = dramatic-stat:
+     - If one metric dominates -> hero-metric
+     - Else -> kpi_cards (Section 15.7.1)
+3) If visual_intent = data-proof:
+     - If multi-KPI + chart needed -> data-dashboard
+     - If direct category comparison -> bar_chart/comparison
+4) If visual_intent = narrative-image:
+     - If text overlay <= 2 lines -> narrative-image
+     - Else -> split-image-text
+5) If visual_intent = action-items -> action-close/closing
+6) Run DeckRhythm validation; if violation, choose alternate recipe with different dominant_element
+```
+
+## 20) Image Treatment Types
+
+> **Images are not just placed — they are treated to match the slide's visual intent.**
+
+### 20.1 Treatment Catalog
+
+| Treatment | Usage | CSS |
+|-----------|-------|-----|
+| `full-bleed` | Narrative image slides | `width: 100%; height: 100%; object-fit: cover;` |
+| `background-10%` | Title/closing slides | `opacity: 0.10; position: absolute; z-index: 0;` |
+| `background-15%` | Quote slides | `opacity: 0.15; position: absolute; z-index: 0;` |
+| `left-50%` | Split image-text | `width: 50%; height: 100%; object-fit: cover;` |
+| `top-30%` | AI hint with image | `width: 100%; height: 30%; object-fit: cover;` |
+| `chart-centered` | Data visualization | `max-width: 80%; margin: auto; display: block;` |
+| `none` | Code/table slides | No image treatment |
+
+### 20.2 CSS Reference Snippets
+
+```css
+.treat-full-bleed { width: 100%; height: 100%; object-fit: cover; }
+.treat-background-10 { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.10; z-index: 0; }
+.treat-background-15 { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.15; z-index: 0; }
+.treat-left-50 { width: 50%; height: 100%; object-fit: cover; }
+.treat-top-30 { width: 100%; height: 30%; object-fit: cover; }
+.treat-chart-centered { max-width: 80%; max-height: 80%; margin: auto; display: block; object-fit: contain; }
+```
+
+### 20.3 Treatment Selection Rules (Phase 3 Binding)
+
+- Choose treatment from `VisualBlueprint.image_strategy.treatment` before HTML composition is rendered.
+- `original-md` images keep source fidelity; treatment may resize/crop but must not alter content semantics.
+- `chart` assets use `chart-centered` unless template-specific chart CSS in Section 15 overrides it.
+- `ai-generated` assets default to `full-bleed` for narrative intent, `left-50%` for split composition.
+- `none` is mandatory for code/table-first slides where image noise reduces readability.
+
+### 20.4 Layering and Readability Constraints
+
+- Background treatments (`background-10%`, `background-15%`) must remain behind text (`z-index: 0`) with text layers at `z-index: 1+`.
+- Overlay text blocks should use solid or high-opacity white backgrounds when contrast falls below readable thresholds.
+- No treatment may introduce motion, transitions, or interactive behavior because output is PDF-first.
+- Color grading and filters must stay minimal and cannot introduce colors outside Section 2 palette rules.
