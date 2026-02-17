@@ -130,6 +130,61 @@ FOR each content_block:
   8. VERIFY: presenter can read entire slide in ≤3 seconds
 ```
 
+## Ellipsis Truncation Prohibition (CRITICAL)
+
+> **NEVER truncate text with `...` (ellipsis).** This is content destruction, not distillation.
+
+```
+❌ ABSOLUTELY PROHIBITED:
+   • "MaraudersMapMD solves this by generating AI-native artifacts that help LLMs unders..."
+   • "The AI Map (ai-map.md) is a structured table showing your document's heading hiera..."
+   • "Built with React, TypeScript, and Tailwind CSS for modern web development and..."
+
+✅ CORRECT — Rewrite as keyword fragment:
+   • MaraudersMapMD → **AI-native artifacts** for LLM understanding
+   • AI Map → structured **heading hierarchy** table
+   • Stack: **React** + TypeScript + Tailwind
+```
+
+**Rule**: If text doesn't fit, REWRITE as a shorter keyword fragment. Never cut mid-word or mid-sentence with `...`. Every bullet must be a complete, meaningful phrase.
+
+**Enforcement**: After distillation, scan ALL slide text for `...` (three dots). If found → CRITICAL BUG → rewrite the truncated text as a proper keyword fragment.
+
+## Title–Body Deduplication (MANDATORY)
+
+> **No text should appear in two places on the same slide.**
+
+The slide title, body bullets, accent word, and footer/caption must each contain **unique information**. Duplication wastes scarce slide space and reduces information density.
+
+```
+DEDUPLICATION ALGORITHM:
+  FOR each slide:
+    1. title_words = set(slide.title.split())
+    2. FOR each bullet in slide.body:
+       bullet_words = set(bullet.split())
+       overlap = title_words ∩ bullet_words
+       IF overlap > 50% of bullet_words:
+         → REWRITE bullet to provide supporting detail, not repeat the title
+    3. IF accent_candidate == primary_keyword:
+       → Choose a DIFFERENT word for accent (a metric, a proper noun, a delta)
+    4. IF footer/caption repeats title or bullet text:
+       → Remove footer text OR replace with page-level context (section name, source)
+```
+
+**Examples:**
+```
+❌ WRONG (title duplicated in body):
+   Title: "Marketplace Listing Features"
+   Body:  • Marketplace listing features include...
+          • Features: syntax highlighting, search
+
+✅ CORRECT (title = conclusion, body = evidence):
+   Title: "Marketplace: 12 Developer-Facing Features"
+   Body:  • Syntax highlighting + semantic search
+          • Auto-install + version management
+          • Multi-language support (**15 languages**)
+```
+
 ## Anti-Patterns (ALL PROHIBITED)
 
 | What | Why It's Wrong | Fix |
@@ -139,7 +194,9 @@ FOR each content_block:
 | Bullet longer than 1 line | It's a paragraph disguised as a bullet | Condense to ≤7 words |
 | Prose paragraphs on slides | This is a document, not a slide | Extract 2-3 keyword bullets |
 | Repeating title content in body | Redundancy wastes space | Title = conclusion, body = evidence |
+| **Ellipsis truncation (`...`)** | **Content destruction, meaning lost** | **Rewrite as complete keyword fragment** |
 | Filler words ("In order to", "It is important that") | Zero information value | Delete completely |
 | **Deleting paragraphs entirely** | **Content loss — empty slides** | **Convert to keyword bullets FIRST** |
 | **Empty slide body** | **Critical rendering failure** | **Re-extract from source, merge, or add visual** |
 | **1-line section as standalone slide** | **Wasted slide, poor flow** | **Merge via SHORT-SECTION-MERGE** |
+| **Title text repeated in bullets** | **Information duplication, wasted space** | **Title = conclusion, body = evidence** |

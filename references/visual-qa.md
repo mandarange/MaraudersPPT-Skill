@@ -41,6 +41,11 @@ For each slide thumbnail, verify:
 | 8 | **Visual coverage** | No text-only content slides (every slide has a visual element) |
 | 9 | **CJK rendering** | Korean/Japanese text renders without tofu (□) or missing glyphs |
 | 10 | **White space** | Adequate breathing room, no cramped layouts |
+| 11 | **Ellipsis truncation** | Scan ALL text for `...` — any truncated text = CRITICAL BUG, must rewrite |
+| 12 | **Title–body duplication** | Title text repeated in body bullets = wasted space, must deduplicate |
+| 13 | **URL integrity** | URLs not broken mid-domain, display-shortened if >80 chars, readable |
+| 14 | **Section structure** | H3 sub-headings preserved as bold sub-headers or separate slides |
+| 15 | **Information density** | Each slide conveys unique info — no "item list + truncated sentence" patterns |
 
 ### Step 3: Report Issues
 

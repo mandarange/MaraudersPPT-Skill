@@ -54,7 +54,7 @@ Based on Pretendard font metrics at standard sizes:
 | # | Verification Item | On Failure | Max Attempts |
 |---|-------------------|-----------|:------------:|
 | 1 | **Text within body area** (y + height ≤ 944px) | Font reduction cascade | 3 |
-| 2 | **Title within title area** (y + height ≤ 188px) | Truncate title to 1 line | 1 |
+| 2 | **Title within title area** (y + height ≤ 188px) | Rewrite title shorter (NEVER truncate with `...`) | 1 |
 | 3 | **No element overlap** (bounding box intersection = 0) | Reposition → regenerate | 3 |
 | 4 | **Margins respected** (all content x ≥ 68px, x+w ≤ 1852px) | Reposition | 1 |
 | 5 | **Image ratio preserved** (aspect ratio distortion < 2%) | Restore original ratio | 1 |
@@ -76,7 +76,60 @@ Step 5: Force slide split (create continuation slide)
 - **All chart/infographic content text is NEVER reduced below 16px**
 - Max **3 regeneration attempts**. After 3 failures → adopt best result + **log critical warning**
 
-## 7.5 The Golden Rule
+## 7.5 URL / Long-Text Rendering Rules
+
+> **URLs, file paths, and code snippets need special wrap treatment to prevent visual breakage.**
+
+### CSS Rules for Long Text (MANDATORY in all slide HTML)
+
+```css
+/* Apply to ALL slide body text containers */
+.slide-body {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: none;            /* Never auto-hyphenate */
+}
+
+/* URLs and code — monospace, controlled wrap */
+.slide-body a, .slide-body code, .slide-url {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14pt;          /* Slightly smaller than body for URLs */
+  word-break: break-all;    /* Allow break at any character for URLs */
+  color: #555555;
+}
+```
+
+### URL Display Policy
+
+| URL Length | Action |
+|:----------:|--------|
+| ≤40 chars | Display inline as-is |
+| 41–80 chars | Display on own line, full URL, monospace 14pt |
+| >80 chars | **Shorten to display label** — e.g., `open-vsx.org/.../marauders-map-md` |
+| Multiple URLs | Move to footer area or "Links" appendix slide |
+
+**Rule**: URLs must NEVER wrap mid-domain. If a URL must break, break at `/` path separators only.
+
+```
+❌ WRONG (URL breaks mid-word):
+   https://open-vsx.org/extension/manda
+   range/marauders-map-md
+
+✅ CORRECT (break at path separator):
+   https://open-vsx.org/extension/
+   mandarange/marauders-map-md
+
+✅ BEST (shortened display):
+   open-vsx.org/.../marauders-map-md
+```
+
+### File Path / Code Rendering
+
+- File paths: monospace, 14pt, `#555555`
+- Code snippets: respect `code` layout (dark background), max 12 lines per slide
+- Long single-line code: `overflow-x: auto` with horizontal scroll hint, NOT wrap
+
+## 7.6 The Golden Rule
 
 ```
 IF text overflows the slide:

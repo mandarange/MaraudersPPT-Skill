@@ -12,7 +12,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.3.0"
+  version: "1.3.1"
   author: "MaraudersPPT"
 ---
 
@@ -103,9 +103,11 @@ All environments proceed immediately — no confirmation prompts.
 
 ### Step 2: Markdown Parsing
 
-- H1 → document title, H2 → section separation
+- H1 → document title, H2 → section separation, **H3 → sub-header within slide or slide split**
+- H3 mapping: If H2 section has 2+ H3 children with substantial content → split into separate slides per H3. If H3 content is light → use as **bold sub-header** within parent slide's body area.
 - Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, **plain paragraphs**
 - **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets — NEVER silently deleted. Every paragraph produces ≥1 bullet.
+- **URL/LINK HANDLING**: URLs in source MD → preserve as display text (shortened if >80 chars). Never discard links silently. Group multiple URLs into a dedicated links slide or footer area.
 
 ### Step 2.3: Core Keyword Extraction (CRITICAL)
 
@@ -164,7 +166,7 @@ Auto-insert after title slide for 10+ slide decks. Content: 3–5 KPI metrics + 
 
 **Korean/CJK: 0.7x multiplier.** Bullet = keyword fragment, NOT sentence.
 
-**⚠️ CONTENT PRESERVATION GUARANTEE**: Distillation means CONDENSE, never DELETE.
+**⚠️ CONTENT PRESERVATION GUARANTEE**: Distillation means CONDENSE, never DELETE. **NEVER truncate with `...`** — rewrite as keyword fragment. **NEVER duplicate title text in body bullets** — title = conclusion, body = evidence.
 
 ```
 HIERARCHY (in order):
