@@ -37,7 +37,7 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 | **Anti-Vibe-Coding Design** | No rounded cards, no gray backgrounds, no AI dashboard aesthetics — McKinsey/BCG quality |
 | **16px Minimum Font** | All chart/infographic content text ≥ 16px (exceptions: slide numbers 10pt, captions 12pt) |
 | **Mandatory Original Images** | All `![alt](path)` images from the MD file are inserted into slides (never omitted) |
-| **AI Image Generation** | Auto-generates photorealistic content images via NanoBanana Pro / Gemini API |
+| **AI Image Generation** | Auto-generates photorealistic content images via Cursor native image gen / OpenCode background tasks |
 | **Layout Integrity** | Auto-validates overflow/overlap/margin violations + up to 3 regeneration attempts |
 | **Slide Flow Optimization** | MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX rules applied |
 | **Version Control** | Each generation outputs `v{M}.{m}_filename.pptx` + `.pdf` simultaneously |
@@ -70,12 +70,12 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 
 | Environment | AI Image Generation | PPT Conversion | Model Switching |
 |-------------|-------------------|----------------|-----------------|
-| **OpenCode** | Gemini Pro background task | User's selected model retained | Automatic |
-| **Cursor / Others** | Gemini Pro (full model) | Gemini Pro | Pre-confirmation required |
+| **Cursor 2.4+** | Native image gen (built-in agent tool) | User's selected model | **Not required** |
+| **OpenCode** | Background task via `task()` | User's selected model | **Not required** |
 
-- **OpenCode**: Only image generation runs as a separate Gemini Pro model via `task(run_in_background=true)`
-- **Cursor/Others**: Prompts user to switch to Gemini Pro before starting → proceeds after user confirmation
-- **Environment Detection**: Auto-determined by availability of background task API
+- **Cursor**: Uses built-in image generation agent tool (powered by Nano Banana Pro) — no model switch needed
+- **OpenCode**: Image generation runs as a background task via `task(run_in_background=true)`
+- **Both environments**: Pipeline proceeds immediately with zero confirmation prompts
 
 ---
 
@@ -133,8 +133,8 @@ html = render_chart("bar_chart", [
 | `pptxgenjs` | PowerPoint file generation | **Required** |
 | `playwright` | HTML rendering / PDF generation / chart screenshots | **Required** |
 | `sharp` | Image post-processing (rasterization) | **Required** |
-| `NanoBanana Pro` | AI photorealistic image generation (Gemini CLI Extension) | Conditional |
-| `Gemini 2.5 Flash Image API` | NanoBanana Pro fallback | Optional |
+| Cursor native image gen | Built-in agent tool for AI image generation (Cursor 2.4+) | Cursor only |
+| `task()` background gen | OpenCode image generation via background agent | OpenCode only |
 
 ---
 

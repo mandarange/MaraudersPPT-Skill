@@ -140,39 +140,43 @@ In the HTML slide file, reference images using **absolute file paths**:
 
 ## 4.6 Generation Methods (3 paths, in priority order)
 
-### Priority 1A: NanoBanana Pro (Cursor / Gemini CLI environments)
+### Priority 1A: Cursor Native Image Generation
 
-> **NanoBanana Pro** is a Gemini CLI extension that generates photorealistic images using Gemini 2.5 Flash Image model. It saves output to `./nanobanana-output/` automatically.
+> **Cursor 2.4+** has a built-in image generation agent tool (powered by Google Nano Banana Pro). The agent generates images when you describe them — no CLI commands, no model switching, no installation required.
 
-**Installation** (one-time):
-```bash
-gemini extensions install https://github.com/gemini-cli-extensions/nanobanana
+**How it works:**
+1. The skill describes the desired image in natural language
+2. Cursor's agent invokes its built-in image generation tool
+3. The generated image is saved to the project's `assets/` folder by default
+4. The image is shown inline in chat as a preview
+
+**Generation per slide:**
+```
+For EACH slide needing an image:
+  Generate a photorealistic image for a presentation slide.
+  Concept: {image_prompt_from_4.2}
+  Save to: {output_dir}/assets/ai-img-{NN}-{label}.png
+  Requirements: 1920x1080px, PNG, professional corporate style,
+  clean background, NO text/logos/watermarks.
 ```
 
-**Generation** (per slide):
-```bash
-/generate "{image_prompt_from_4.2}" --styles="photorealistic" --count=1
-```
-
-**Copy to assets pipeline**:
-```bash
-# NanoBanana saves to ./nanobanana-output/*.png
-# Copy the generated file to the slide assets directory
-GENERATED=$(ls -t ./nanobanana-output/*.png | head -1)
-cp "$GENERATED" "{output_dir}/assets/ai-img-{NN}-{label}.png"
-```
-
-**Batch generation** (fire all slides, then collect):
+**Batch generation** (describe all needed images, let agent generate sequentially):
 ```
 FOR EACH slide needing an image:
-  /generate "{slide.image_prompt}" --styles="photorealistic" --count=1
-  → cp ./nanobanana-output/*.png → {output_dir}/assets/ai-img-{NN}-{label}.png
+  → Describe image using prompt from Section 4.2
+  → Agent generates via native image gen tool → saves to {output_dir}/assets/
   → Verify: ls -la {output_path} (file exists, size > 0)
 ```
 
-### Priority 1B: Gemini via task() (OpenCode environments)
+**Key advantages over CLI approach:**
+- Zero setup — works out of the box in Cursor 2.4+
+- No model switching — image gen works regardless of selected chat model
+- Saves directly to project `assets/` folder
+- Inline preview in chat for immediate visual verification
 
-**OpenCode** — use `task()` to delegate image generation to a Gemini model in background:
+### Priority 1B: Background Task Delegation (OpenCode environments)
+
+**OpenCode** — use `task()` to delegate image generation to a background agent:
 
 ```
 For EACH slide needing an image:
@@ -184,12 +188,12 @@ For EACH slide needing an image:
             Save the image to: {output_dir}/assets/ai-img-{NN}-{label}.png
             Requirements: 1920x1080px, PNG, professional corporate style,
             clean background, NO text/logos/watermarks.
-            Use Gemini image generation or create a high-quality HTML visual
+            Use image generation or create a high-quality HTML visual
             and screenshot it with Playwright."
   )
 ```
 
-**Note**: If NanoBanana Pro is also available in an OpenCode environment, prefer Priority 1A.
+**Note**: Background tasks run in parallel — fire all image generation tasks at once, continue with other pipeline work, then collect results before Step 5.
 
 ### Priority 2: HTML Concept Visual + Playwright Screenshot (ALWAYS WORKS)
 
@@ -316,16 +320,15 @@ async function generatePlaceholder(keyword, outputPath) {
 
 | Environment | Priority 1 | Priority 2 | Priority 3 |
 |-------------|-----------|-----------|-----------|
-| **Cursor (with NanoBanana)** | NanoBanana Pro `/generate` → copy to `assets/` | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
-| **OpenCode** | `task(run_in_background=true)` → Gemini generates images in parallel | HTML concept visual + Playwright screenshot (if task fails) | SVG + Sharp placeholder |
-| **Cursor (no NanoBanana)** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
-| **No Gemini available** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
+| **Cursor 2.4+** | Native image gen (built-in agent tool) → saves to `assets/` | HTML concept visual + Playwright screenshot | SVG + Sharp placeholder |
+| **OpenCode** | `task(run_in_background=true)` → background agent generates images | HTML concept visual + Playwright screenshot (if task fails) | SVG + Sharp placeholder |
+| **Other / No image gen** | Skip | HTML concept visual + Playwright screenshot (**primary method**) | SVG + Sharp placeholder |
 
-**IMPORTANT**: In non-Gemini/non-NanoBanana environments, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
+**IMPORTANT**: In environments without native image gen or `task()`, Priority 2 (HTML concept visual) becomes the **primary** method. It always works because it only needs Playwright (already a dependency).
 
 **Environment detection order:**
-1. Check if `/generate` command is available (NanoBanana Pro) → use Priority 1A
-2. Check if `task()` API is available (OpenCode) → use Priority 1B
+1. Cursor environment → use native image generation (Priority 1A)
+2. OpenCode environment (`task()` available) → use background delegation (Priority 1B)
 3. Neither available → skip to Priority 2 (HTML concept visual)
 
 ## 4.8 Image Quality Requirements
@@ -344,15 +347,9 @@ async function generatePlaceholder(keyword, outputPath) {
 
 ```
 FOR each slide needing an image:
-  TRY Priority 1A (NanoBanana Pro — if available)
-    → /generate "{prompt}" --styles="photorealistic" --count=1
-    → cp ./nanobanana-output/*.png → {output_dir}/assets/ai-img-{NN}-{label}.png
-    → IF success: verify file, continue
-    → IF fail: log warning, try Priority 1B or Priority 2
-
-  TRY Priority 1B (Gemini via task() — if OpenCode)
-    → task(run_in_background=true, ...) 
-    → IF success: save PNG, continue
+  TRY Priority 1A (Cursor native image gen) or Priority 1B (OpenCode background task)
+    → Describe image using prompt from Section 4.2
+    → IF success: verify file at {output_dir}/assets/, continue
     → IF fail: log warning, try Priority 2
 
   TRY Priority 2 (HTML concept visual + Playwright)
@@ -371,8 +368,8 @@ FOR each slide needing an image:
 
 **Log format for diagnostics:**
 ```
-[IMG-OK]  Slide 3: ai-img-03-architecture.png (Priority 1A: NanoBanana, 312KB)
-[IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 1B: Gemini task, 245KB)
+[IMG-OK]  Slide 3: ai-img-03-architecture.png (Priority 1: native image gen, 312KB)
+[IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 1: background task, 245KB)
 [IMG-OK]  Slide 7: ai-img-07-deployment.png (Priority 2: HTML concept, 89KB)
 [IMG-WARN] Slide 8: ai-img-08-security.png (Priority 3: SVG placeholder, 12KB)
 [IMG-FAIL] Slide 9: generation failed — title-only slide (CRITICAL)

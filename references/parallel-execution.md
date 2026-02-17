@@ -52,7 +52,7 @@ Wave 2 is the primary bottleneck. The following tasks are **fully independent** 
 
 | Task | Agent/Method | Blocking? | Typical Duration |
 |------|-------------|-----------|-----------------|
-| AI Image Generation | `task(run_in_background=true)` — Gemini Pro | No (background) | 5–15s per image |
+| AI Image Generation | Cursor native image gen / `task(run_in_background=true)` | No (background) | 5–15s per image |
 | Chart HTML Rendering | `render_chart(type, data)` — Python templates | No (instant) | <100ms per chart |
 | Chart Screenshots | Playwright batch — one browser, multiple pages | No (background) | 1–3s per chart |
 | Slide HTML Generation | Sequential HTML file writes | Yes (foreground) | <1s per slide |
@@ -68,7 +68,7 @@ for slide in slides_needing_images:
     tid = task(
         run_in_background=True,
         prompt=f"Generate photorealistic image: {slide.image_prompt}",
-        # ... NanoBanana Pro / Gemini API
+        # ... native image gen (Cursor) or background agent (OpenCode)
     )
     image_tasks.append(tid)
 

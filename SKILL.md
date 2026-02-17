@@ -4,16 +4,16 @@ description: >
   Converts Markdown documents into presentation-quality PowerPoint files (.pptx + .pdf).
   Requires explicit "MaraudersMD2PPT" invocation — never self-activates.
   Maps heading hierarchies, tables, code blocks, images, and AI Hint blocks to 23 slide
-  layout types. Generates AI photorealistic images via NanoBanana Pro / Gemini API.
-  Extracts core keywords to drive action titles, accent words, and visual coverage.
-  Fully supports Korean/CJK text with Pretendard font.
+  layout types. Generates AI photorealistic images via native image generation (Cursor)
+  or background task delegation (OpenCode). Extracts core keywords to drive action titles,
+  accent words, and visual coverage. Fully supports Korean/CJK text with Pretendard font.
 license: MIT
 allowed-tools: read write bash glob grep edit
 compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.2.3"
+  version: "1.3.0"
   author: "MaraudersPPT"
 ---
 
@@ -72,7 +72,7 @@ Without this keyword, the skill pipeline will not execute.
 
 > Once activated, Steps 1–8 run to completion with **ZERO mid-flow confirmations**.
 
-**PROHIBITED during pipeline:** "Should I continue?", "Do you want me to proceed?", "Ready to generate?", or any confirmation request. The only permitted confirmation is the Cursor model-switch (1x, before Step 1).
+**PROHIBITED during pipeline:** "Should I continue?", "Do you want me to proceed?", "Ready to generate?", or any confirmation request. Zero confirmations in ALL environments.
 
 **State tracking throughout pipeline:**
 ```
@@ -90,11 +90,11 @@ environment:        "OpenCode" | "Cursor"
 | | OpenCode | Cursor / Other |
 |--|----------|----------------|
 | `task()` available? | ✅ | ❌ |
-| NanoBanana Pro? | Check | ✅ (if installed) |
-| Image generation | Gemini via `task()` (background) | NanoBanana Pro `/generate` (preferred) |
-| Model switch? | No | **Yes — 1x confirmation** |
+| Native image gen? | ❌ | ✅ (built-in agent tool) |
+| Image generation | Background task via `task()` | Cursor native image generation |
+| Model switch? | No | **No** |
 
-In Cursor only: display Gemini Pro switch guidance, wait for `"continue"` / `"ok"` / `"yes"`, then execute Steps 1–8 without interruption.
+Both environments proceed immediately — no confirmation prompts.
 
 ### Step 1: Input Reception
 
@@ -216,7 +216,7 @@ FOR each mapped slide:
 - **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
 
 **Generation methods (3 priorities):**
-1. **NanoBanana Pro** `/generate` (Cursor/Gemini CLI) or **Gemini via `task()`** (OpenCode) — AI-quality photorealistic images
+1. **Cursor native image gen** (built-in agent tool) or **background `task()`** (OpenCode) — AI-quality photorealistic images, saved to `assets/` directly
 2. **HTML concept visual + Playwright screenshot** — ALWAYS WORKS, no external API needed. Create styled HTML (gradient + abstract shapes + keyword) → screenshot as 1920×1080 PNG
 3. **SVG geometric placeholder + Sharp** — simplest fallback, minimal visual anchor
 
@@ -376,7 +376,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 | Target | Method |
 |--------|--------|
-| Slides without visuals | Priority 1: NanoBanana Pro (Cursor) / Gemini task (OpenCode) → Priority 2: HTML concept + Playwright → Priority 3: SVG + Sharp |
+| Slides without visuals | Priority 1: Cursor native image gen / OpenCode background task → Priority 2: HTML concept + Playwright → Priority 3: SVG + Sharp |
 | Charts/infographics | HTML templates (`templates/charts/`) → Playwright screenshot |
 | Diagrams/flowcharts | HTML/SVG |
 | Original MD images | Copy to `assets/`, reference via absolute path in HTML |
@@ -392,8 +392,8 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 | Dependency | Role | Required |
 |-----------|------|----------|
 | `document-skills/pptx` | html2pptx engine, PptxGenJS API | **Required** |
-| `NanoBanana Pro` | AI image generation (Gemini CLI Extension) | **Required** |
-| `Gemini 2.5 Flash Image API` | NanoBanana fallback | Fallback |
+| Cursor native image gen | Built-in agent tool (powered by Nano Banana Pro) | Cursor only |
+| `task()` background gen | OpenCode image generation via background agent | OpenCode only |
 | `pptxgenjs` | PowerPoint generation | **Required** (npm) |
 | `playwright` | HTML rendering / screenshots | **Required** (npm) |
 | `sharp` | Image post-processing | **Required** (npm) |
