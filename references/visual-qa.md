@@ -62,6 +62,28 @@ Action: Regenerating affected slides...
 
 Fix issues and re-run QA on affected slides only.
 
+### Step 4: Automated Quality Gates (MANDATORY)
+
+Compute the following metrics before final completion:
+
+| Metric | Formula | Target | Hard Fail Condition |
+|-------|---------|--------|---------------------|
+| `text_only_slide_ratio` | `text_only_content_slides / total_content_slides * 100` | `0%` | `> 0%` |
+| `markdown_token_leakage_count` | Count of leaked tokens (`###`, `##`, `#`, ``` , `, raw `[text](url)`, raw list markers) | `0` | `> 0` |
+| `truncated_sentence_ratio` | `slides_with_ellipsis / total_content_slides * 100` | `0%` | `> 0%` |
+| `duplicate_text_ratio` | `slides_with_title_body_overlap_over_50pct / total_slides * 100` | `< 5%` | `>= 5%` |
+
+If any hard fail condition is met:
+
+```
+❌ Quality Gate Failed
+
+- Do NOT finalize output as "complete"
+- Regenerate affected slides
+- Recompute metrics
+- Only pass when all gates meet targets
+```
+
 ## Automated vs Manual QA
 
 | Automated (Step 7) | Visual QA (This Step) |

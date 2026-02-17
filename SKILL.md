@@ -12,7 +12,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "1.3.1"
+  version: "1.3.2"
   author: "MaraudersPPT"
 ---
 
@@ -107,6 +107,7 @@ All environments proceed immediately — no confirmation prompts.
 - H3 mapping: If H2 section has 2+ H3 children with substantial content → split into separate slides per H3. If H3 content is light → use as **bold sub-header** within parent slide's body area.
 - Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, **plain paragraphs**
 - **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets — NEVER silently deleted. Every paragraph produces ≥1 bullet.
+- **MARKDOWN SANITIZATION (MANDATORY)**: Remove markdown syntax tokens from display text before slide rendering: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (``` / `), and raw link syntax (`[text](url)` → display text). Token leakage in rendered slide text is a CRITICAL BUG.
 - **URL/LINK HANDLING**: URLs in source MD → preserve as display text (shortened if >80 chars). Never discard links silently. Group multiple URLs into a dedicated links slide or footer area.
 
 ### Step 2.3: Core Keyword Extraction (CRITICAL)
@@ -214,6 +215,7 @@ FOR each mapped slide:
 - Prompt derived from `primary_keyword` → professional conceptual image
 - On generation: `text-body` → `image-text` layout switch (condense text for 50% width)
 - **0% text-only content slides allowed**
+- **HARD GATE**: If any non-visual content slide still has no visual after all generation retries, FAIL pipeline and STOP before output generation.
 - **EMPTY SLIDE CATCH**: If a slide reaches Step 4 with NO body content AND no visual → generate image from section title as prompt + add section title as single-line body text. This is the LAST defense against blank slides.
 
 **Generation methods (3 priorities):**
@@ -253,6 +255,20 @@ FOR each mapped slide:
 
 ### Step 8: Output & Diagnostic Report
 
+> **Hard gates run BEFORE writing PPTX/PDF.** If any gate fails, STOP and report failures.
+
+```
+HARD GATES (must all pass):
+  1) text_only_slide_ratio == 0%
+  2) markdown_token_leakage_count == 0
+  3) visual_coverage == 100%
+
+IF any gate fails:
+  → pipeline_status = "FAILED"
+  → do NOT write .pptx/.pdf
+  → output blocking error report with offending slide numbers
+```
+
 ```
 {original_filename}_pptx/
 ├── v{M}.{m}_{original_filename}.pptx    ← Editable
@@ -271,6 +287,10 @@ Environment:      OpenCode | Cursor
 Steps Executed:   [✅] Steps 0–8 (list each)
 Quality Metrics:
   Visual coverage:     {N}/{M} (target: 100%)
+  Text-only ratio:     {text_only_slide_ratio}% (target: 0%)
+  Token leakage count: {markdown_token_leakage_count} (target: 0)
+  Truncation ratio:    {truncated_sentence_ratio}% (target: 0%)
+  Duplicate ratio:     {duplicate_text_ratio}% (target: < 5%)
   Content distillation: All ≤ 50w/35w
   Layout violations:   0
 Output: {filepath}
@@ -425,6 +445,12 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 - [ ] **0% text-only content slides**
 - [ ] AI images derived from `primary_keyword`
 - [ ] Layout adapted on image addition, text condensed
+
+### Hard-Gate Metrics
+- [ ] `text_only_slide_ratio == 0%`
+- [ ] `markdown_token_leakage_count == 0`
+- [ ] `truncated_sentence_ratio == 0%`
+- [ ] `duplicate_text_ratio < 5%`
 
 ### Design
 - [ ] Accent `#D94F4F`: 1 per slide, word-level Bold only

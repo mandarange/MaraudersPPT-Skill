@@ -358,12 +358,18 @@ FOR each slide needing an image:
 
   TRY Priority 3 (SVG + Sharp placeholder)
     → IF success: save PNG, continue
-    → IF fail: CRITICAL — log error, but STILL generate slide (title-only as last resort)
+    → IF fail: CRITICAL — mark slide as "visual-missing" and FAIL pipeline
 
   AFTER all attempts:
     → Verify file exists at expected path: ls -la {output_path}
     → Verify file size > 0 bytes
-    → IF file missing or empty: regenerate with Priority 3
+    → IF file missing or empty: mark as visual-missing and FAIL pipeline
+
+AFTER processing all slides:
+  → Compute text_only_slide_ratio
+  → IF text_only_slide_ratio > 0%:
+      HARD FAIL (do not generate PPTX/PDF)
+      report offending slide numbers
 ```
 
 **Log format for diagnostics:**
@@ -372,5 +378,5 @@ FOR each slide needing an image:
 [IMG-OK]  Slide 5: ai-img-05-performance.png (Priority 1: background task, 245KB)
 [IMG-OK]  Slide 7: ai-img-07-deployment.png (Priority 2: HTML concept, 89KB)
 [IMG-WARN] Slide 8: ai-img-08-security.png (Priority 3: SVG placeholder, 12KB)
-[IMG-FAIL] Slide 9: generation failed — title-only slide (CRITICAL)
+[IMG-FAIL] Slide 9: generation failed — visual missing (PIPELINE FAIL)
 ```

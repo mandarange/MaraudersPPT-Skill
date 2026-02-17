@@ -150,6 +150,10 @@ FOR each content_block:
 
 **Enforcement**: After distillation, scan ALL slide text for `...` (three dots). If found → CRITICAL BUG → rewrite the truncated text as a proper keyword fragment.
 
+**Metric**: `truncated_sentence_ratio = (slides_with_ellipsis / total_content_slides) * 100`
+
+**Gate threshold**: `truncated_sentence_ratio == 0%`
+
 ## Title–Body Deduplication (MANDATORY)
 
 > **No text should appear in two places on the same slide.**
@@ -184,6 +188,32 @@ DEDUPLICATION ALGORITHM:
           • Auto-install + version management
           • Multi-language support (**15 languages**)
 ```
+
+**Metric**: `duplicate_text_ratio = (slides_with_title_body_overlap_over_50pct / total_slides) * 100`
+
+**Gate threshold**: `duplicate_text_ratio < 5%`
+
+## Markdown Token Leakage Prohibition (CRITICAL)
+
+> **Raw markdown syntax must never appear in rendered slide text.**
+
+```
+PROHIBITED TOKENS IN FINAL TEXT:
+  ###, ##, #
+  ``` , `
+  - , * , + , 1. (as literal list markers)
+  [text](url) (raw markdown link form)
+```
+
+**Sanitization rule**: Convert markdown structure to layout semantics before rendering text:
+- headings → title/sub-header text without `#`
+- lists → bullets without source markers
+- links → display text or shortened URL label
+- inline code → monospace text without backticks
+
+**Metric**: `markdown_token_leakage_count = count(all leaked markdown tokens across slides)`
+
+**Gate threshold**: `markdown_token_leakage_count == 0`
 
 ## Anti-Patterns (ALL PROHIBITED)
 

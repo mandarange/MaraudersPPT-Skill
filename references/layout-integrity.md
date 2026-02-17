@@ -94,7 +94,8 @@ Step 5: Force slide split (create continuation slide)
 .slide-body a, .slide-body code, .slide-url {
   font-family: 'JetBrains Mono', monospace;
   font-size: 14pt;          /* Slightly smaller than body for URLs */
-  word-break: break-all;    /* Allow break at any character for URLs */
+  word-break: normal;       /* Avoid mid-token breaks */
+  overflow-wrap: break-word;
   color: #555555;
 }
 ```
