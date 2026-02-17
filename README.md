@@ -143,10 +143,17 @@ html = render_chart("bar_chart", [
 ```
 MaraudersPPT-Skill/
 ├── README.md                      ← This file
-├── SKILL.md                       ← Skill workflow, layouts, checklist (v1.1)
+├── SKILL.md                       ← Skill workflow, layouts, checklist (v1.2)
 ├── LICENSE                        ← MIT License
 ├── package.json                   ← npm dependencies (playwright, pptxgenjs, sharp)
 ├── .gitignore                     ← Git ignore rules
+├── references/                    ← Detailed reference docs (progressive disclosure)
+│   ├── keyword-extraction.md      ← Core keyword extraction rules
+│   ├── content-distillation.md    ← Slide text limits & distillation algorithm
+│   ├── image-generation.md        ← Visual coverage audit & prompt derivation
+│   ├── layout-integrity.md        ← Safe areas, font metrics, verification
+│   ├── parallel-execution.md      ← 5-wave architecture & performance
+│   └── visual-qa.md              ← Post-generation visual inspection
 ├── templates/
 │   └── charts/                    ← 8 infographic Python templates
 │       ├── __init__.py            ← render_chart(type, data) dispatcher
@@ -170,7 +177,8 @@ MaraudersPPT-Skill/
 
 | Document | Contents |
 |----------|----------|
-| [`SKILL.md`](./SKILL.md) | Skill workflow (10 steps), 23 layouts, validation checklist, IDE environment guide, 5-wave parallel execution optimization |
+| [`SKILL.md`](./SKILL.md) | Skill workflow (Steps 0–9), 23 layouts, validation checklist, design rules summary |
+| [`references/`](./references/) | Detailed reference docs: keyword extraction, content distillation, image generation, layout integrity, parallel execution, visual QA |
 | [`docs/design-spec.md`](./docs/design-spec.md) | Color palette, typography, 8px grid, layout specs, 8 infographic CSS specifications |
 | [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Feature spec, conversion rules, architecture, acceptance criteria |
 
