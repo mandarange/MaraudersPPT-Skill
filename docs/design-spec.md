@@ -272,6 +272,82 @@ Step 4: Force split slide
 | 4 |Images/Charts|collapsible|
 | 5 |Caption/Source|Can be omitted first|
 
+### 5.7 Slide Content Limits (SLIDES ARE NOT DOCUMENTS)
+
+> **A slide with too much text is a badly made slide.**
+> The problem is never "the text overflowed." The problem is "there's too much text."
+> These limits define good slide design, not overflow thresholds.
+
+#### 5.7.1 The Fundamental Rule
+
+```
+The audience should grasp the slide in ≤3 seconds of reading.
+The presenter speaks the details. The slide shows keywords only.
+If the audience is reading your slide, you've already failed.
+```
+
+#### 5.7.2 Content Limits Per Layout (DESIGN LIMITS, NOT OVERFLOW LIMITS)
+
+| Layout | Title | Body | Bullets | Words/Bullet | Total Slide Budget |
+|--------|:-----:|:----:|:-------:|:------------:|:-----------------:|
+| `title` | 8w | 10w (subtitle) | — | — | ~20w |
+| `executive-summary` | 6w | 15w (conclusion) | — | — | ~25w |
+| `section-divider` | 6w | — | — | — | ~6w |
+| `text-body` | 10w | 40w | — | — | ~50w |
+| `bullet-list` | 10w | — | **3** (max 4) | **7** | ~35w |
+| `image-text` | 8w | — | 3 | **5** | ~25w |
+| `table` | 8w | — | — | — | — |
+| `code` | 8w | — | — | — | — |
+| `ai-hint` | 8w | 30w | — | — | ~40w |
+| `quote` | — | 20w | — | — | ~20w |
+| `checklist` | 8w | — | 4 items | 6 | ~35w |
+| `closing` | 8w | — | 3 steps | 5 | ~25w |
+| `kpi-cards` | 8w | — | 4 cards | 3 (label) | — |
+| `bar-chart` | 8w | — | 6 bars | 5 (label) | — |
+| `process-flow` | 8w | — | 8 steps | 3 (label) | — |
+| `timeline` | 8w | — | 6 items | 4 (event) | — |
+| `comparison` | 8w | — | 4/side | 6 | — |
+| `icon-grid` | 8w | — | 6 cells | 5 (desc) | — |
+| `funnel` | 8w | — | 5 stages | 3 (label) | — |
+
+**"Total Slide Budget"** = Title + ALL body text combined. If the entire slide exceeds this word count, the slide is over-written.
+
+#### 5.7.3 CJK Multiplier
+
+| Language | Multiplier | Example: 7-word bullet becomes |
+|----------|:----------:|:------------------------------:|
+| English | 1.0× | 7 words |
+| Korean | 0.7× | 5 단어 (~12 음절) |
+| Japanese | 0.7× | 5 語 |
+| Chinese | 0.65× | 4-5 字 |
+
+#### 5.7.4 Bullet = Keyword Fragment
+
+```
+A bullet is NOT a sentence. It is a keyword fragment.
+
+❌ "We improved processing speed from 3 seconds to 0.8 seconds"  (11 words — sentence)
+✅ "처리 속도: **3s → 0.8s**"  (keyword fragment)
+
+❌ "Adopted MSA architecture for independent deployment"  (7 words — still a sentence)
+✅ "MSA 도입 → 독립 배포"  (keyword fragment)
+
+Rule: If it has a subject + verb + object, it's a sentence. Rewrite.
+```
+
+#### 5.7.5 When Content Exceeds Limits
+
+```
+The content is too much. Not the slide.
+
+1. Distill: Remove filler, rewrite as keyword fragments
+2. Split: Create 2 focused slides instead of 1 crowded slide
+3. Appendix: Move supporting data, keep only conclusion in body
+4. Merge: If a section has too little substance, merge with adjacent
+
+NEVER: Reduce font size to fit more text. That's treating the symptom.
+```
+
 ### 5.6 Automated Layout Validation
 
 After generating each slide, it automatically verifies:
@@ -530,20 +606,95 @@ All slide titles must be **complete sentences containing a conclusion**:
 
 ---
 
+## 8.5) Keyword Extraction & Slide Content Guidelines
+
+> **Keywords are the DNA of every slide.**
+> Without proper keyword extraction, slides become text walls.
+> This section defines how extracted keywords translate to visual design.
+
+### 8.5.1 Keyword-to-Design Mapping
+
+| Keyword Type | Visual Treatment | CSS/Style |
+|-------------|-----------------|-----------|
+| `accent_candidate` (1 per slide) | Bold + Accent color | `font-weight: 700; color: #D94F4F;` |
+| `supporting_keyword` (max 2 per slide) | Bold only | `font-weight: 700; color: #1A1A1A;` |
+| `kpi_metric` | Large number display | `font-size: 56px; font-weight: 700; font-variant-numeric: tabular-nums;` |
+| `primary_keyword` → Action title | Slide title rewrite | `font-size: 24pt; font-weight: 700;` — must be a complete sentence with conclusion |
+
+### 8.5.2 Action Title Construction from Keywords
+
+Every slide title MUST be an action title derived from `primary_keyword`:
+
+```
+Formula: [Quantified Result/Fact] + [Verb] + [Impact/Conclusion]
+
+primary_keyword: "processing speed 3x improvement"
+→ Action title: "Processing speed improves 3x, cutting average response from 3s to 0.8s"
+
+primary_keyword: "MSA architecture adoption"  
+→ Action title: "MSA architecture adoption enables independent scaling per service"
+
+primary_keyword: "failure rate reduction"
+→ Action title: "System failure rate drops 73% after migration to new platform"
+```
+
+**Title word limit**: Max 15 words (Korean: ~25 characters). If the constructed title exceeds this, prioritize the numeric outcome.
+
+### 8.5.3 Accent Word Placement Rules
+
+| Rule | Specification |
+|------|--------------|
+| **Exactly 1 per slide** | Never 0, never 2+ |
+| **Word-level only** | Apply to specific number/phrase, never to entire sentence |
+| **Bold required** | Accent color (`#D94F4F`) always paired with `font-weight: 700` |
+| **Position** | Place within body text where the eye naturally flows (1st or 2nd bullet preferred) |
+| **Selection priority** | Numbers > Percentages > Comparisons > Decision keywords |
+
+### 8.5.4 Slides Without Identifiable Keywords
+
+If keyword extraction finds no clear `primary_keyword` for a section:
+
+1. **Re-analyze**: Look for implicit keywords (topic nouns, action verbs, structural markers)
+2. **If still none**: The section likely contains low-value content → merge with adjacent section or move to appendix
+3. **Never generate a slide without a clear keyword focus**
+
+---
+
 ## 9) Rules for using images
 
 ### 9.1 Image sourcing
 
-> **The image (`![alt](path)`) included in the original MD file must be used in the slide. No omission.**
+> **Every content slide MUST have a visual element. No text-only slides allowed.**
+> The image (`![alt](path)`) included in the original MD file must be used in the slide. No omission.
+> Slides without original images, charts, tables, or code blocks MUST receive an AI-generated image.
 
 |Source|Method|Priority|Required?|
 |------|------|---------|----------|
 |Local image in MD|`![alt](./path)` reference → direct insertion|1st place|**Required — do not omit**|
 |MD My Remote Image|`![alt](https://...)` → Insert after downloading|1st place|**Required — do not omit**|
 |**HTML Charts/Infographics**|**Implement data visualization with HTML → Playwright screenshot → insert**|2nd place|Automatic Generate|
-|Images related to content|Search/download related images from the web|3rd place|select|
-|Generate images|Generate diagrams and icons directly|4th place|select|
-|**AI Generate Images (Realistic)**|**NanoBanana Pro → Gemini API fallback → PNG insert**|**5th place**|select|
+|**AI Generated Content Images**|**NanoBanana Pro → Gemini API fallback → PNG insert**|**3rd place**|**Required — for ALL slides without visuals**|
+|Images related to content|Search/download related images from the web|4th place|select|
+|Generate images|Generate diagrams and icons directly|5th place|select|
+
+#### 9.1.2 Mandatory Visual Coverage Rule
+
+> **0% of content slides may be text-only.**
+
+After slide mapping, audit every slide for visual content:
+
+| Slide Has... | Visual Status | Action |
+|-------------|:------------:|--------|
+| Original MD image | ✅ | None |
+| Chart/infographic | ✅ | None |
+| Code block | ✅ | None (dark bg = visual) |
+| Table | ✅ | None (table = visual) |
+| `section-divider` bg | ✅ | None (inverted bg) |
+| **Nothing visual** | ❌ | **Generate AI image from slide's primary_keyword** |
+
+**Image prompt derivation**: Use the slide's `primary_keyword` (from Step 2.3 keyword extraction) to create a one-line visual concept prompt. The image must represent the slide's core message as a single professional visual.
+
+**Layout adaptation**: When an AI image is added, switch text-only layouts to `image-text` (50:50 or 60:40 split). Condense body text to fit the reduced text area.
 
 #### 9.1.1 Rules for mandatory use of original MD images
 
