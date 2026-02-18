@@ -1,10 +1,43 @@
 # MaraudersPPT Skill
 
-A Claude Code Skill that automatically converts Markdown documents into presentation-quality slides (.pdf).
+A Claude Code / Cursor Skill that automatically converts Markdown documents into presentation-quality slides (.pdf).
 Preserves the original Markdown's structure, images, and data while generating a presentation-ready PDF.
 
 > **PDF is the primary presentation output** — all visual elements are designed for static rendering.
 > No animations, transitions, buttons, or interactive elements are generated.
+
+---
+
+## Installation
+
+### Claude Code (OpenCode)
+
+```bash
+# From your project root
+claude mcp add-skill /path/to/MaraudersPPT-Skill
+```
+
+Or manually copy the skill directory and reference `SKILL.md` in your configuration.
+
+### Cursor
+
+Clone or copy this repository into your project's `.cursor/skills/` directory:
+
+```bash
+# From your project root
+cp -r /path/to/MaraudersPPT-Skill .cursor/skills/maraudersppt-skill
+```
+
+Cursor will automatically detect the skill from `.cursor/skills/maraudersppt-skill/SKILL.md`.
+
+### Dependencies
+
+After installation, install the required npm packages:
+
+```bash
+npm install    # installs playwright, sharp
+npx playwright install chromium
+```
 
 ---
 
@@ -121,10 +154,6 @@ Every generated image is recorded in `assets/image-manifest.json`:
 - Explicit refresh: `--refresh=all`, `--refresh=slide:7`, `--refresh=type:ai-generated`
 - Images are never deleted by the pipeline
 
-- `sections.json` (parsed MD sections)
-- `slides.json` (summarized slide IR)
-- `html-files.json` (render target list)
-
 ---
 
 ## Chart Templates
@@ -186,7 +215,9 @@ MaraudersPPT-Skill/
 │   ├── image-generation.md        ← Visual coverage audit & prompt derivation
 │   ├── layout-integrity.md        ← Safe areas, font metrics, verification
 │   ├── parallel-execution.md      ← 6-wave architecture & performance
-│   └── visual-qa.md              ← Post-generation visual inspection
+│   ├── visual-qa.md              ← Post-generation visual inspection
+│   ├── cognitive-layout.md        ← Cognitive science-based layout rules (eye-tracking, Gestalt)
+│   └── svg-components.md          ← Inline SVG component library for charts & diagrams
 ├── templates/
 │   ├── charts/                    ← 8 infographic Python templates
 │   │   ├── __init__.py            ← render_chart(type, data) dispatcher
@@ -199,7 +230,6 @@ MaraudersPPT-Skill/
 │   │   ├── comparison.py          ← Side-by-side comparison
 │   │   ├── icon_grid.py           ← Icon grid
 │   │   └── funnel.py              ← Funnel chart
-│   └── compositions/              ← Planned: Section Card composition templates
 └── docs/
     ├── design-spec.md             ← Design spec (colors, typography, layout, chart CSS)
     └── prd-md-to-pptx-skill.md    ← Product Requirements Document (PRD)
@@ -212,9 +242,21 @@ MaraudersPPT-Skill/
 | Document | Contents |
 |----------|----------|
 | [`SKILL.md`](./SKILL.md) | Skill workflow (Phases 0-5), 23 layouts, validation checklist, design rules summary |
-| [`references/`](./references/) | Detailed reference docs: insight extraction, content distillation, image generation, layout integrity, parallel execution, visual QA |
 | [`docs/design-spec.md`](./docs/design-spec.md) | Color palette, typography, 8px grid, layout specs, 8 infographic CSS specifications |
-| [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Feature spec, conversion rules, architecture, acceptance criteria |
+| [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Product requirements, conversion rules, architecture, acceptance criteria |
+
+### Reference Docs (`references/`)
+
+| Document | Contents |
+|----------|----------|
+| [`insight-extraction.md`](./references/insight-extraction.md) | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm |
+| [`content-distillation.md`](./references/content-distillation.md) | Slide text limits, bullet rules, distillation algorithm |
+| [`image-generation.md`](./references/image-generation.md) | 3-priority image system, Image Manifest cache, prompt derivation |
+| [`layout-integrity.md`](./references/layout-integrity.md) | Safe areas, font metrics, overflow verification checklist |
+| [`parallel-execution.md`](./references/parallel-execution.md) | 6-wave pipeline architecture, parallel render strategy |
+| [`visual-qa.md`](./references/visual-qa.md) | Post-generation visual inspection workflow |
+| [`cognitive-layout.md`](./references/cognitive-layout.md) | Eye-tracking patterns, Gestalt principles, McKinsey/BCG layout rules |
+| [`svg-components.md`](./references/svg-components.md) | Inline SVG patterns for charts, shapes, diagrams in HTML→PDF pipeline |
 
 ---
 

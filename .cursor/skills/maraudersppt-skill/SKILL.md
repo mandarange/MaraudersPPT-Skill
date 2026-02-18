@@ -379,6 +379,7 @@ Stored inside `assets/` — single source of truth for every image file.
 - Individual HTML per slide, CSS inline, 16:9 at 1920x1080px
 - Composition templates for structured layouts
 - Pretendard font with fallback chain
+- **PDF Layout Reliability Rule**: For vertical centering and precise positioning, use `position: absolute` with explicit offsets (e.g., `top: 50%; transform: translateY(-50%)`) or fixed pixel values. Avoid relying solely on `flexbox` for 1080px height distribution, as headless PDF renderers may miscalculate viewport height.
 - Use SVG components for: curved shapes, arrow markers, trend lines, crisp icons at any scale
 
 #### Phase 4.4 PDF Rendering
