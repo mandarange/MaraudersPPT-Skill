@@ -22,6 +22,7 @@ from . import (
     icon_grid,
     funnel,
 )
+from .annotations import wrap_with_annotations, insight_caption, callout
 
 _REGISTRY = {
     "kpi_cards": kpi_cards,

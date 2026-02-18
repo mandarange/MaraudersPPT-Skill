@@ -39,13 +39,13 @@ _CSS = """\
 }
 
 .icon-cell {
-  border: 1px solid #E0E0E0;
+  border: 1px solid var(--color-border, #E0E0E0);
   border-radius: 2px;
   padding: 32px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: #FFFFFF;
+  background: var(--color-bg, #FFFFFF);
 }
 
 .icon-emoji {
@@ -58,7 +58,7 @@ _CSS = """\
   margin: 16px 0 0 0;
   font-size: 18px;
   line-height: 24px;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   letter-spacing: -0.2px;
 }
@@ -67,7 +67,7 @@ _CSS = """\
   margin: 8px 0 0 0;
   font-size: 16px;
   line-height: 24px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
 }"""
 
 CSS = full_css(_CSS)

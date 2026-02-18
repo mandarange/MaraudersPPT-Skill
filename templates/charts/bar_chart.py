@@ -33,7 +33,7 @@ _CSS = """\
   margin: 0;
   font-size: 18px;
   line-height: 24px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
   font-weight: 500;
   text-align: right;
 }
@@ -41,23 +41,23 @@ _CSS = """\
 .bar-track {
   flex: 1;
   height: 40px;
-  background: #F2F2F2;
+  background: var(--color-surface-alt, #F2F2F2);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .bar-fill {
   height: 40px;
-  background: #D0D0D0;
+  background: var(--bar-fill-color, #D0D0D0);
   border-radius: 2px;
 }
 
 .bar-fill.is-max {
-  background: #1A1A1A;
+  background: var(--bar-fill-max-color, #1A1A1A);
 }
 
 .bar-fill.is-accent {
-  background: #D94F4F;
+  background: var(--color-accent, #D94F4F);
 }
 
 .bar-value {
@@ -66,7 +66,7 @@ _CSS = """\
   text-align: right;
   font-size: 18px;
   line-height: 24px;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }"""

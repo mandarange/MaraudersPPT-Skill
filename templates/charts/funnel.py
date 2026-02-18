@@ -42,7 +42,7 @@ _CSS = """\
 .stage-5 { background: #E8E8E8; }
 
 .funnel-stage.is-accent {
-  background: #D94F4F;
+  background: var(--color-accent, #D94F4F);
 }
 
 .funnel-label {
@@ -69,8 +69,8 @@ _CSS = """\
   color: #FFFFFF;
 }
 
-.stage-4 .funnel-label, .stage-4 .funnel-value { color: #333333; }
-.stage-5 .funnel-label, .stage-5 .funnel-value { color: #555555; }"""
+.stage-4 .funnel-label, .stage-4 .funnel-value { color: var(--color-text, #333333); }
+.stage-5 .funnel-label, .stage-5 .funnel-value { color: var(--color-text-secondary, #555555); }"""
 
 CSS = full_css(_CSS)
 

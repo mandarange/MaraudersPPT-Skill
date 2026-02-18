@@ -28,7 +28,7 @@ _CSS = """\
   right: 80px;
   top: 380px;
   height: 2px;
-  background: #E8E8E8;
+  background: var(--color-border, #E8E8E8);
 }
 
 .timeline-item {
@@ -53,20 +53,20 @@ _CSS = """\
   width: 20px;
   height: 20px;
   border-radius: 10px;
-  background: #1A1A1A;
-  border: 4px solid #FFFFFF;
+  background: var(--color-text, #1A1A1A);
+  border: 4px solid var(--color-bg, #FFFFFF);
   box-sizing: border-box;
 }
 
 .timeline-dot.is-accent {
-  background: #D94F4F;
+  background: var(--color-accent, #D94F4F);
 }
 
 .timeline-date {
   margin: 0;
   font-size: 16px;
   line-height: 22px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
   font-weight: 600;
 }
 
@@ -74,7 +74,7 @@ _CSS = """\
   margin: 10px 0 0 0;
   font-size: 18px;
   line-height: 26px;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   letter-spacing: -0.2px;
 }"""

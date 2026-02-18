@@ -25,9 +25,9 @@ _CSS = """\
 .flow-step {
   width: 200px;
   min-height: 140px;
-  border: 1px solid #E0E0E0;
+  border: 1px solid var(--color-border, #E0E0E0);
   border-radius: 2px;
-  background: #FFFFFF;
+  background: var(--color-bg, #FFFFFF);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,7 +40,7 @@ _CSS = """\
   margin: 0;
   font-size: 16px;
   line-height: 20px;
-  color: #888888;
+  color: var(--color-text-muted, #888888);
   font-weight: 700;
 }
 
@@ -48,7 +48,7 @@ _CSS = """\
   margin: 12px 0 0 0;
   font-size: 20px;
   line-height: 26px;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   text-align: center;
   letter-spacing: -0.2px;
@@ -58,13 +58,13 @@ _CSS = """\
   margin: 0;
   font-size: 20px;
   line-height: 20px;
-  color: #CCCCCC;
+  color: var(--color-text-muted, #CCCCCC);
   flex-shrink: 0;
 }
 
 .flow-step-active {
-  background: #1A1A1A;
-  border-color: #1A1A1A;
+  background: var(--color-text, #1A1A1A);
+  border-color: var(--color-text, #1A1A1A);
 }
 
 .flow-step-active .flow-step-no {

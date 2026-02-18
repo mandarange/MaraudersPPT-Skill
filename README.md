@@ -67,6 +67,13 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 | **Executive Summary** | Auto-generates a key KPI summary slide right after the title for decks with 10+ slides |
 | **CTA Closing** | Final slide with key message + Next Steps + contact info |
 | **AI Hint Special Handling** | `[AI RULE]`, `[AI DECISION]`, `[AI NOTE]`, `[AI CONTEXT]` highlighted slides |
+| **Design Token System** | 3-tier token architecture (primitive/semantic/component) with CSS custom properties and theme resolution |
+| **5 Theme Packs** | consulting_minimal, modern_editorial, product_pitch, dark_executive, academic_clean |
+| **Layout Rhythm Engine** | 69 layout variants (23 types × 3) with scoring algorithm that prevents visual monotony |
+| **Editorial Details** | Running headers, folios, source citations, exhibit labels, dividers — consulting-grade paratextual elements |
+| **Human-Likeness Scoring** | Automated H-score (0.0–1.0) across 5 dimensions with 0.80 pass threshold |
+| **Anti-AI Design Lint** | NO1–NO6 rules block glassmorphism, large radius, deep shadows, neon glow, multi-hue, dashboard UI |
+| **Chart Annotations** | Insight captions and callout overlays for data-driven storytelling on chart slides |
 | **Anti-Vibe-Coding Design** | No rounded cards, no gray backgrounds, no AI dashboard aesthetics — McKinsey/BCG quality |
 | **16px Minimum Font** | All chart/infographic content text ≥ 16px (exceptions: slide numbers 10pt, captions 12pt) |
 | **Mandatory Original Images** | All `![alt](path)` images from the MD file are inserted into slides (never omitted) |
@@ -90,11 +97,13 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 ## Design Philosophy
 
 - **Designed for PDF output** — no animations, transitions, or interactive elements
-- **White background (`#FFFFFF`) + black text (`#1A1A1A`)** as default. Font size, layout, and readability are paramount
-- Accent color (`#D94F4F`) used **only at the word-level Bold** — max 1 per slide
+- **Theme-driven styling** — CSS custom properties with `var(--token, fallback)` for backward-compatible theming
+- **Neutral + 1 accent** color principle — restrained palette, no multi-hue chaos
 - **1–2 topics per slide**, bullet-point and quantitative style (max 4 bullets, optimal 3)
 - 16:9 aspect ratio, 1920×1080px high resolution
 - 8px grid-based consistent spacing system
+- **Layout rhythm** — variant selection algorithm prevents consecutive same-feel slides
+- **Editorial design, not decoration** — thin dividers, captions, exhibit labels, running headers instead of blobs/glows/gradients
 - **Original MD images are mandatory** — `![alt](path)` images must never be omitted
 
 ---
@@ -205,23 +214,36 @@ html = render_chart("bar_chart", [
 ```
 MaraudersPPT-Skill/
 ├── README.md                      ← This file
-├── SKILL.md                       ← Skill workflow, layouts, checklist (v2.0.0)
+├── SKILL.md                       ← Skill workflow, layouts, checklist (v2.1.0)
 ├── LICENSE                        ← MIT License
 ├── package.json                   ← npm dependencies (playwright, sharp)
 ├── .gitignore                     ← Git ignore rules
+├── design/                        ← Design system Python package
+│   ├── __init__.py                ← Public API (33 exports)
+│   ├── tokens.py                  ← 3-tier design token dictionary
+│   ├── vars.py                    ← Token path → CSS custom property mapping
+│   ├── resolve.py                 ← ThemeResolver: tokens + theme → :root CSS
+│   ├── themes.py                  ← 5 theme packs
+│   ├── variants.py                ← 23 layout types × 3 variants (69 total)
+│   ├── variant_select.py          ← Rhythm-based variant scoring algorithm
+│   ├── editorial.py               ← Running headers, folios, citations, labels, dividers
+│   ├── image_treatment.py         ← 4 image treatment strategies
+│   └── lint.py                    ← Static design lint + human-likeness scoring
 ├── references/                    ← Detailed reference docs (progressive disclosure)
+│   ├── design-system.md           ← Token/theme/variant/lint architecture reference
 │   ├── insight-extraction.md      ← Section Card schema, insight extraction algorithm
 │   ├── content-distillation.md    ← Slide text limits & distillation algorithm
 │   ├── image-generation.md        ← Visual coverage audit & prompt derivation
 │   ├── layout-integrity.md        ← Safe areas, font metrics, verification
 │   ├── parallel-execution.md      ← 6-wave architecture & performance
-│   ├── visual-qa.md              ← Post-generation visual inspection
+│   ├── visual-qa.md               ← Post-generation visual inspection + H-score
 │   ├── cognitive-layout.md        ← Cognitive science-based layout rules (eye-tracking, Gestalt)
 │   └── svg-components.md          ← Inline SVG component library for charts & diagrams
 ├── templates/
 │   ├── charts/                    ← 8 infographic Python templates
 │   │   ├── __init__.py            ← render_chart(type, data) dispatcher
-│   │   ├── base.py                ← Shared CSS & utilities
+│   │   ├── base.py                ← Shared CSS & utilities (tokenized)
+│   │   ├── annotations.py         ← Chart insight captions & callout overlays
 │   │   ├── kpi_cards.py           ← KPI card grid
 │   │   ├── bar_chart.py           ← Horizontal bar chart
 │   │   ├── donut_chart.py         ← Donut chart
@@ -231,7 +253,7 @@ MaraudersPPT-Skill/
 │   │   ├── icon_grid.py           ← Icon grid
 │   │   └── funnel.py              ← Funnel chart
 └── docs/
-    ├── design-spec.md             ← Design spec (colors, typography, layout, chart CSS)
+    ├── design-spec.md             ← Design spec (colors, typography, tokens, themes, variants)
     └── prd-md-to-pptx-skill.md    ← Product Requirements Document (PRD)
 ```
 
@@ -241,8 +263,8 @@ MaraudersPPT-Skill/
 
 | Document | Contents |
 |----------|----------|
-| [`SKILL.md`](./SKILL.md) | Skill workflow (Phases 0-5), 23 layouts, validation checklist, design rules summary |
-| [`docs/design-spec.md`](./docs/design-spec.md) | Color palette, typography, 8px grid, layout specs, 8 infographic CSS specifications |
+| [`SKILL.md`](./SKILL.md) | Skill workflow (Phases 0-5 + 1.5), 23 layouts, design system integration, validation checklist |
+| [`docs/design-spec.md`](./docs/design-spec.md) | Color palette, typography, 8px grid, layout specs, tokens, themes, variants, editorial |
 | [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Product requirements, conversion rules, architecture, acceptance criteria |
 
 ### Reference Docs (`references/`)
@@ -254,9 +276,51 @@ MaraudersPPT-Skill/
 | [`image-generation.md`](./references/image-generation.md) | 3-priority image system, Image Manifest cache, prompt derivation |
 | [`layout-integrity.md`](./references/layout-integrity.md) | Safe areas, font metrics, overflow verification checklist |
 | [`parallel-execution.md`](./references/parallel-execution.md) | 6-wave pipeline architecture, parallel render strategy |
-| [`visual-qa.md`](./references/visual-qa.md) | Post-generation visual inspection workflow |
+| [`design-system.md`](./references/design-system.md) | Token/theme/variant architecture, editorial details, lint rules |
+| [`visual-qa.md`](./references/visual-qa.md) | Post-generation visual inspection + automated design lint + H-score |
 | [`cognitive-layout.md`](./references/cognitive-layout.md) | Eye-tracking patterns, Gestalt principles, McKinsey/BCG layout rules |
 | [`svg-components.md`](./references/svg-components.md) | Inline SVG patterns for charts, shapes, diagrams in HTML→PDF pipeline |
+
+---
+
+## Design System
+
+The `design/` Python package provides a token-driven theming and quality assurance system.
+
+```python
+from design import ThemeResolver, TOKENS, get_theme, select_variant, VariantState
+from design import inject_editorial_elements, lint_deck, human_likeness_score
+
+resolver = ThemeResolver(TOKENS, get_theme("consulting_minimal"))
+theme_css = resolver.to_inline_style_block()
+
+state = VariantState()
+variant = select_variant("body_text", state, {"word_count": 120})
+
+score = human_likeness_score(all_slide_htmls)
+assert score["pass"], f"H-score {score['overall']:.2f} < 0.80"
+```
+
+### Themes
+
+| Theme | Accent | Character |
+|-------|--------|-----------|
+| `consulting_minimal` | Navy #003087 | McKinsey/BCG corporate clarity |
+| `modern_editorial` | Red #C41E3A | Magazine-style editorial polish |
+| `product_pitch` | Cobalt #1B4FD8 | Modern SaaS/startup energy |
+| `dark_executive` | Steel #8A94A6 | Premium dark-mode for high-stakes |
+| `academic_clean` | Burgundy #8B0000 | Scholarly restraint |
+
+### Anti-AI Design Lint
+
+| Rule | Blocks |
+|------|--------|
+| NO1 | Glassmorphism, backdrop-filter, blur |
+| NO2 | border-radius > 4px |
+| NO3 | box-shadow blur > 4px |
+| NO4 | text-shadow, drop-shadow |
+| NO5 | Multiple saturated hues per slide |
+| NO6 | Dashboard UI (tabs, toggles, pills) |
 
 ---
 

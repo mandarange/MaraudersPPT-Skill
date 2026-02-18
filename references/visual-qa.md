@@ -24,6 +24,40 @@ pdftoppm -png -r 150 output.pdf slide
 pdftoppm -jpeg -r 150 output.pdf slide
 ```
 
+### Step 1.5: Automated Design Lint (Pre-Visual)
+
+Before manual visual inspection, run the static design lint:
+
+```python
+from design.lint import lint_deck, human_likeness_score
+
+issues = lint_deck(slide_htmls, variant_history=variant_ids)
+errors = [i for i in issues if i.severity == "error"]
+result = human_likeness_score(slide_htmls)
+```
+
+#### Lint Rule Categories
+
+| Category | Rules | Severity |
+|----------|-------|----------|
+| Layout integrity | EQ1_OVERFLOW_*, EQ1_FONT_MINIMUM, EQ1_SAFE_AREA_* | error/warning |
+| Anti-AI guards | NO1-NO6 (glass, radius, shadow, neon, color, dashboard) | warning |
+| Editorial quality | YES1 (header, folio, source, divider) | info |
+| Typography | YES4 (hierarchy, range, caption gap) | warning |
+| Rhythm | DQ1_CONSECUTIVE_SAME, DQ1_VISUAL_MONOTONY | warning/info |
+
+#### Human-Likeness Score (H-Score)
+
+| Dimension | Weight | Measures |
+|-----------|--------|---------|
+| H1_layout_rhythm | 0.25 | Variety ratio + consecutive-sameness penalty |
+| H2_editorial_polish | 0.20 | Running header/folio coverage, source citations |
+| H3_color_restraint | 0.20 | Single-accent-hue adherence |
+| H4_typography_hierarchy | 0.20 | Title/body/caption size separation |
+| H5_anti_ai_clean | 0.15 | Absence of NO1-NO6 violations |
+
+Threshold: >= 0.80 to pass. Below threshold: identify lowest dimension, apply targeted fixes, re-score (max 3 iterations).
+
 ### Step 2: Visual Inspection Checklist
 
 For each slide thumbnail, verify:
@@ -50,6 +84,10 @@ For each slide thumbnail, verify:
 | 18 | **Coverage report** | All source sections accounted for (coverage_pct = 100%) |
 | 19 | **Image Manifest consistency** | Cached images still valid, no stale references |
 | 20 | **Mood arc** | Emotional progression follows story arc (tense→hopeful→confident) |
+| 21 | **Design lint clean** | No `error` severity lint issues in `lint_deck()` output |
+| 22 | **H-Score >= 0.80** | `human_likeness_score()` overall >= 0.80 |
+| 23 | **Anti-AI compliance** | No glassmorphism, large radius, deep shadows, neon glow |
+| 24 | **Editorial elements** | Running headers, folios, source citations present |
 
 ### Step 3: Report Issues
 

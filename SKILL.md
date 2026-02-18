@@ -14,7 +14,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
   author: "MaraudersPPT"
 ---
 
@@ -32,6 +32,7 @@ Converts Markdown -> presentation-quality PDF. For detailed design specs see `do
 | [Layout Integrity](references/layout-integrity.md) | Safe areas, font metrics, verification checklist, golden rule |
 | [Parallel Execution](references/parallel-execution.md) | 6-wave architecture, parallel render strategy, performance gains |
 | [Visual QA](references/visual-qa.md) | Post-generation visual inspection workflow |
+| [Design System](references/design-system.md) | Token/theme/variant architecture, editorial details, lint rules |
 | [Design Spec](docs/design-spec.md) | Colors, typography, 8px grid, infographic CSS |
 | [PRD](docs/prd-md-to-pptx-skill.md) | Product requirements, acceptance criteria |
 
@@ -172,6 +173,27 @@ Auto-detect infographic candidates from text content:
 | Decreasing stages | Funnel |
 
 **Mode: AGGRESSIVE** - convert all mappable content. Use `templates/charts/` Python templates.
+
+### Phase 1.5: Design System Resolution
+
+```yaml
+DesignSystemConfig:
+  theme: string          # "consulting_minimal" | "modern_editorial" | "product_pitch" | "dark_executive" | "academic_clean"
+  variant_state: object  # VariantState — tracks layout rhythm across slides
+  editorial:
+    running_header: bool  # default: true
+    folio: bool           # default: true
+    confidential: bool    # default: false
+```
+
+1. **Theme selection**: Infer from InputContract audience + tone. Default: `consulting_minimal`
+   - executive → `consulting_minimal` or `dark_executive`
+   - team → `consulting_minimal`
+   - external → `product_pitch` or `modern_editorial`
+   - academic → `academic_clean`
+2. **Token resolution**: `ThemeResolver(TOKENS, get_theme(theme_name))` produces `:root { ... }` CSS block
+3. **VariantState initialization**: `VariantState()` tracks per-slide variant history for rhythm enforcement
+4. **Editorial config**: Running header text = deck title, folio numbering = sequential
 
 ### Phase 2: Narrative Architecture (Story Arc + Slide Plan + Dual Output Routing)
 
@@ -319,6 +341,15 @@ VisualBlueprint:
   template: string            # composition template name
 ```
 
+#### Variant Selection (Layout Rhythm)
+
+For each slide's layout_type, call `select_variant(layout_type, variant_state, content_hint)`. The algorithm penalizes:
+- Same variant_key as previous slide (-4.0)
+- 3+ consecutive same dominant_element (-5.0)
+- 3+ consecutive same content_density (-3.5)
+
+Content hints (word_count, bullet_count, has_image, has_data) bias toward appropriate density/dominant variants.
+
 #### Phase 3.2 Deck Rhythm
 
 ```yaml
@@ -460,6 +491,15 @@ Output: {filepath}
 > Full workflow -> [references/visual-qa.md](references/visual-qa.md)
 
 After generation, visually inspect slide thumbnails for rendering issues automated checks cannot detect: text overflow, font rendering, color accuracy, CJK glyph rendering, alignment consistency.
+
+#### Theme Injection and Design Lint
+
+After all slide HTML is generated:
+1. **Inject theme CSS**: Prepend `resolver.to_inline_style_block()` to each slide `<style>` block
+2. **Inject editorial elements**: `inject_editorial_elements(html, slide_index, total, deck_title)` per slide
+3. **Design lint**: `lint_deck(all_slide_htmls, variant_history)` — fix `error` severity issues
+4. **Human-likeness score**: `human_likeness_score(all_slide_htmls)` — must return >= 0.80
+   - Below threshold: identify lowest dimension, apply targeted fixes, re-score (max 3 iterations)
 
 ---
 
@@ -634,6 +674,33 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 6-wave pipeline: Gate -> Semantic -> Narrative -> Blueprint -> Parallel Render -> Assemble+Verify.
 
 Parallel Render wave runs image generation, chart rendering, and HTML composition concurrently after blueprint lock. Assemble+Verify executes hard-gate validation, coverage audit, and final packaging.
+
+---
+
+## Design System (`design/` package)
+
+| Module | Purpose |
+|--------|---------|
+| `tokens.py` | 3-tier design token dictionary (primitive/semantic/component) |
+| `vars.py` | Token path to CSS custom property name mapping |
+| `resolve.py` | ThemeResolver: deep-merge tokens + theme overrides to `:root` CSS |
+| `themes.py` | 5 theme packs |
+| `variants.py` | 23 layout types x 2-3 variants each (69 total) with CSS overrides |
+| `variant_select.py` | VariantState + rhythm-based select_variant() scoring |
+| `editorial.py` | Running headers, folios, source citations, exhibit labels, dividers |
+| `image_treatment.py` | 4 image treatments (crop_focus, muted_tone, readability_overlay, background_panel) |
+| `lint.py` | Static design lint (NO1-NO6 anti-AI, YES1/YES4 editorial, H1-H5 scoring) |
+
+### Anti-AI Design Rules (Enforced by Lint)
+
+| Rule | What is Blocked |
+|------|----------------|
+| NO1 | Glassmorphism, backdrop-filter, blur effects |
+| NO2 | border-radius > 4px (except donut charts) |
+| NO3 | box-shadow blur > 4px or spread > 0 |
+| NO4 | text-shadow, drop-shadow (neon/glow) |
+| NO5 | Multi-saturated-hue slides (>1 accent hue) |
+| NO6 | Dashboard UI patterns (tabs, toggles, pills, badges) |
 
 ---
 

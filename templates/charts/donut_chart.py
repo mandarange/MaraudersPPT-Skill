@@ -40,7 +40,7 @@ _CSS = """\
   width: 240px;
   height: 240px;
   border-radius: 120px;
-  background: #FFFFFF;
+  background: var(--color-bg, #FFFFFF);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -52,7 +52,7 @@ _CSS = """\
   margin: 0;
   font-size: 52px;
   line-height: 1.1;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -1px;
@@ -62,7 +62,7 @@ _CSS = """\
   margin: 8px 0 0 0;
   font-size: 16px;
   line-height: 22px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
   font-weight: 500;
 }
 
@@ -81,7 +81,7 @@ _CSS = """\
   gap: 14px;
   font-size: 18px;
   line-height: 26px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
 }
 
 .legend-dot {

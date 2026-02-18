@@ -2571,3 +2571,106 @@ DeckRhythm:
 - Overlay text blocks should use solid or high-opacity white backgrounds when contrast falls below readable thresholds.
 - No treatment may introduce motion, transitions, or interactive behavior because output is PDF-first.
 - Color grading and filters must stay minimal and cannot introduce colors outside Section 2 palette rules.
+
+---
+
+## 21) Design Token System
+
+### 21.1 Three-Tier Architecture
+
+| Tier | Purpose | CSS Exposure |
+|------|---------|-------------|
+| **Primitive** | Raw palette values (neutral_50 through neutral_900, accent_500) | Not exposed as CSS vars |
+| **Semantic** | Role-based mapping (text, bg, accent, border, surface) | `--color-text`, `--color-bg`, etc. |
+| **Component** | Widget-specific (kpi_value, bar_fill_max) | `--kpi-value-color`, etc. |
+
+### 21.2 Token to CSS Variable Mapping
+
+| Token Path | CSS Variable |
+|------------|-------------|
+| `color.semantic.bg` | `--color-bg` |
+| `color.semantic.text` | `--color-text` |
+| `color.semantic.accent` | `--color-accent` |
+| `color.semantic.text_secondary` | `--color-text-secondary` |
+| `color.semantic.text_muted` | `--color-text-muted` |
+| `color.semantic.border` | `--color-border` |
+| `color.semantic.surface` | `--color-surface` |
+| `color.semantic.surface_alt` | `--color-surface-alt` |
+| `typography.font_stack.primary` | `--font-primary` |
+| `typography.font_stack.display` | `--font-display` |
+| `typography.scale.title` | `--text-title` |
+| `typography.scale.subtitle` | `--text-subtitle` |
+| `typography.scale.body` | `--text-body` |
+| `typography.scale.caption` | `--text-caption` |
+| `layout.safe_margin_x` | `--layout-safe-margin-x` |
+| `layout.content_width` | `--layout-content-width` |
+
+### 21.3 Backward Compatibility
+
+All CSS uses `var(--token, fallback)`:
+```css
+color: var(--color-text, #1A1A1A);
+font-family: var(--font-primary, 'Pretendard', sans-serif);
+```
+If no theme is injected, the hardcoded fallback ensures correct rendering.
+
+---
+
+## 22) Theme Packs
+
+Five predefined themes in `design/themes.py`:
+
+| Theme | Accent | Display Font | Best For |
+|-------|--------|-------------|----------|
+| `consulting_minimal` | Navy #003087 | Helvetica Neue | Executive, strategy |
+| `modern_editorial` | Red #C41E3A | Iowan Old Style | Thought leadership |
+| `product_pitch` | Cobalt #1B4FD8 | Space Grotesk | SaaS, startup |
+| `dark_executive` | Steel #8A94A6 (on #0C0C0C bg) | Avenir Next | Board rooms, keynotes |
+| `academic_clean` | Burgundy #8B0000 (on #FFFEF7 bg) | Source Serif 4 | Research, academic |
+
+Theme resolution: `ThemeResolver(TOKENS, get_theme(name))` deep-merges base tokens with theme overrides, then generates `:root { ... }` CSS block injected after HTML generation.
+
+---
+
+## 23) Layout Variant System
+
+23 layout types with 2-3 variants each (69 total) in `design/variants.py`.
+
+### 23.1 Variant Properties
+
+Each `LayoutVariant` specifies:
+- `dominant_element`: text | image | data | whitespace | mixed
+- `content_density`: sparse | medium | dense
+- `split_ratio`: "50:50" | "60:40" | "40:60" | None
+- `css_overrides`: dict of CSS property overrides for `.content`
+
+### 23.2 Rhythm-Based Selection
+
+`select_variant()` scores candidates to maximize visual rhythm:
+
+| Factor | Score | Purpose |
+|--------|-------|---------|
+| Same variant_key as previous | -4.0 | Prevent repetition |
+| 3+ consecutive same dominant | -5.0 | Force alternation |
+| 3+ consecutive same density | -3.5 | Prevent monotony |
+| Different dominant from previous | +2.0 | Reward variety |
+| Different split_ratio | +1.25 | Reward composition change |
+| Content-appropriate density | +0.75 to +1.25 | Match content volume |
+
+---
+
+## 24) Editorial Details
+
+Consulting-grade paratextual elements from `design/editorial.py`:
+
+| Element | Function | Placement | Font Size |
+|---------|----------|-----------|-----------|
+| Running Header | `running_header(text)` | Top-left | 10px |
+| Folio | `folio(current, total)` | Bottom-right | 10px |
+| Source Citation | `source_citation(text)` | Bottom-left | 9px |
+| Exhibit Label | `exhibit_label(n, caption)` | Above content | 12px |
+| Thin Divider | `thin_divider()` | Below title zone | 1px |
+| Caption | `caption(text)` | Below figures | 12px |
+| Confidential | `confidential_footer(text)` | Bottom-center | 8px |
+
+All use CSS class prefix `editorial-` and respect theme via `var(--color-text-muted, #888888)`.

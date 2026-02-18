@@ -22,7 +22,7 @@ _CSS = """\
 
 .compare-left,
 .compare-right {
-  border: 1px solid #E0E0E0;
+  border: 1px solid var(--color-border, #E0E0E0);
   border-radius: 2px;
   padding: 48px 40px;
   display: flex;
@@ -30,11 +30,11 @@ _CSS = """\
 }
 
 .compare-left {
-  background: #F7F7F7;
+  background: var(--color-surface, #F7F7F7);
 }
 
 .compare-right {
-  background: #FFFFFF;
+  background: var(--color-bg, #FFFFFF);
 }
 
 .compare-divider {
@@ -43,7 +43,7 @@ _CSS = """\
   justify-content: center;
   font-size: 16px;
   line-height: 24px;
-  color: #CCCCCC;
+  color: var(--color-text-muted, #CCCCCC);
   font-weight: 700;
   letter-spacing: 2px;
   position: relative;
@@ -56,20 +56,20 @@ _CSS = """\
   top: 48px;
   bottom: 48px;
   width: 1px;
-  background: #E8E8E8;
+  background: var(--color-border, #E8E8E8);
 }
 
 .compare-title {
   margin: 0 0 24px 0;
   font-size: 24px;
   line-height: 32px;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .compare-title.is-accent {
-  color: #D94F4F;
+  color: var(--color-accent, #D94F4F);
 }
 
 .compare-list {
@@ -83,7 +83,7 @@ _CSS = """\
   padding-left: 20px;
   font-size: 18px;
   line-height: 28px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
   position: relative;
 }
 
@@ -95,11 +95,11 @@ _CSS = """\
   width: 6px;
   height: 6px;
   border-radius: 3px;
-  background: #CCCCCC;
+  background: var(--color-text-muted, #CCCCCC);
 }
 
 .compare-right .compare-list li::before {
-  background: #D94F4F;
+  background: var(--color-accent, #D94F4F);
 }"""
 
 CSS = full_css(_CSS)

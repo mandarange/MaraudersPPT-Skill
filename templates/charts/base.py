@@ -8,13 +8,13 @@ FONT_STACK = (
 CONTENT_CSS = """\
 .content {
   position: absolute;
-  left: 100px;
-  top: 220px;
-  width: 1720px;
-  height: 760px;
-  font-family: %(font)s;
-  color: #1A1A1A;
-  background: #FFFFFF;
+  left: var(--layout-safe-margin-x, 100px);
+  top: var(--layout-safe-margin-top, 220px);
+  width: var(--layout-content-width, 1720px);
+  height: var(--layout-content-height, 760px);
+  font-family: var(--font-primary, %(font)s);
+  color: var(--color-text, #1A1A1A);
+  background: var(--color-bg, #FFFFFF);
 }""" % {"font": FONT_STACK}
 
 

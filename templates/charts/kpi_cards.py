@@ -22,24 +22,24 @@ _CSS = """\
 }
 
 .kpi-card {
-  border: 1px solid #E0E0E0;
+  border: 1px solid var(--color-border, #E0E0E0);
   border-radius: 2px;
   padding: 40px 36px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: #FFFFFF;
+  background: var(--color-bg, #FFFFFF);
 }
 
 .kpi-card.is-accent {
-  border-left: 4px solid #D94F4F;
+  border-left: 4px solid var(--kpi-accent-color, #D94F4F);
 }
 
 .kpi-label {
   margin: 0 0 20px 0;
   font-size: 16px;
   line-height: 22px;
-  color: #555555;
+  color: var(--color-text-secondary, #555555);
   font-weight: 600;
 }
 
@@ -47,7 +47,7 @@ _CSS = """\
   margin: 0;
   font-size: 56px;
   line-height: 1.1;
-  color: #1A1A1A;
+  color: var(--color-text, #1A1A1A);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -1px;
@@ -57,7 +57,7 @@ _CSS = """\
   margin: 20px 0 0 0;
   font-size: 16px;
   line-height: 22px;
-  color: #888888;
+  color: var(--color-text-muted, #888888);
   font-weight: 500;
 }"""
 
