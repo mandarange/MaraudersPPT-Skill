@@ -357,22 +357,62 @@ Rules:
 ### Priority 2: HTML Code Generation (Charts, Diagrams, Compositions)
 Use when Priority 1 is unavailable and intent is structurally renderable.
 
+> Full 8-phase capture protocol → [chart-capture-pipeline.md](chart-capture-pipeline.md)
+
 Routes:
-- `templates/charts/` for data-driven visuals
-- custom HTML for diagrams/compositions
-- Playwright screenshot to PNG for stable embedding
+- `render_chart_page()` for data-driven visuals (generates complete capture-ready HTML)
+- `wrap_capture_html()` for custom HTML diagrams/compositions
+- Playwright `.capture-root` element screenshot → `trim.py` auto-crop
 
-Chart example:
+Chart capture example:
 ```python
-from templates.charts import render_chart
+from templates.charts import render_chart_page
 
-html = render_chart("bar_chart", [
+html = render_chart_page("bar_chart", [
     {"label": "Before", "value": 42, "display": "42m"},
-    {"label": "After", "value": 8, "display": "8m", "max": True}
+    {"label": "After", "value": 8, "display": "8m", "max": True},
 ])
 ```
 
-HTML concept visual code (retained fallback):
+```javascript
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+
+async function captureChart(html, outputPath) {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  await page.setContent(html, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(300);
+
+  const el = await page.locator('.capture-root');
+  const box = await el.boundingBox();
+  if (!box) throw new Error('.capture-root not found');
+
+  await page.setViewportSize({
+    width:  Math.ceil(box.x + box.width  + 20),
+    height: Math.ceil(box.y + box.height + 20),
+  });
+  await page.waitForTimeout(100);
+
+  // Element screenshot — NEVER use page.screenshot() or fullPage
+  await el.screenshot({ path: outputPath, type: 'png' });
+
+  const stat = fs.statSync(outputPath);
+  if (stat.size === 0) throw new Error(`Empty file: ${outputPath}`);
+
+  await browser.close();
+  return outputPath;
+}
+```
+
+Optional auto-crop (requires Pillow):
+```python
+from templates.charts.trim import autocrop
+autocrop("chart-05-throughput.png", pad=8)
+```
+
+HTML concept visual code (retained fallback for non-chart visuals):
 ```javascript
 const { chromium } = require('playwright');
 const path = require('path');
@@ -444,9 +484,9 @@ FOR each slide requiring visual support:
   CHECK manifest cache
     -> if hit and file valid: reuse, continue
 
-  TRY Priority 2 (HTML chart/diagram/composition screenshot)
+  TRY Priority 2 (render_chart_page -> .capture-root screenshot -> auto-crop)
     -> if success: manifest(data_hash), continue
-    -> if fail: warn, go Priority 3
+    -> if fail: warn, go Priority 3 (see chart-capture-pipeline.md for failure table)
 
   TRY Priority 3 (LLM image from insight + claim)
     -> if success: manifest(content_hash), continue

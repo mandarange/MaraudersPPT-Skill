@@ -23,6 +23,7 @@ from . import (
     funnel,
 )
 from .annotations import wrap_with_annotations, insight_caption, callout
+from .base import wrap_capture_html as _wrap_capture_html, capture_css
 
 _REGISTRY = {
     "kpi_cards": kpi_cards,
@@ -61,3 +62,30 @@ def get_css(chart_type: str) -> str:
 def list_types() -> list[str]:
     """List available chart types."""
     return list(_REGISTRY.keys())
+
+
+def render_chart_page(
+    chart_type: str,
+    data,
+    width: int = 1720,
+    height: int = 760,
+) -> str:
+    """Return a complete HTML page for Playwright .capture-root screenshot."""
+    module = _REGISTRY[chart_type]
+    raw_css = module._CSS  # noqa: SLF001
+    inner = module.render(data)
+
+    # Extract body from wrap_html's '<style>…</style>\n<div class="content">…</div>'
+    start_tag = '<div class="content">\n'
+    end_tag = "\n</div>"
+    start_idx = inner.find(start_tag)
+    if start_idx == -1:
+        fragment = inner
+    else:
+        content_start = start_idx + len(start_tag)
+        content_end = inner.rfind(end_tag)
+        fragment = (
+            inner[content_start:content_end] if content_end > content_start else inner
+        )
+
+    return _wrap_capture_html(fragment, raw_css, width, height)

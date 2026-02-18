@@ -32,6 +32,7 @@ Converts Markdown -> presentation-quality PDF. For detailed design specs see `do
 | [Layout Integrity](references/layout-integrity.md) | Safe areas, font metrics, verification checklist, golden rule |
 | [Parallel Execution](references/parallel-execution.md) | 6-wave architecture, parallel render strategy, performance gains |
 | [Visual QA](references/visual-qa.md) | Post-generation visual inspection workflow |
+| [Chart Capture Pipeline](references/chart-capture-pipeline.md) | HTML→Browser→PNG 8-phase capture protocol for chart screenshots |
 | [Design System](references/design-system.md) | Token/theme/variant architecture, editorial details, lint rules |
 | [Design Spec](docs/design-spec.md) | Colors, typography, 8px grid, infographic CSS |
 | [PRD](docs/prd-md-to-pptx-skill.md) | Product requirements, acceptance criteria |
@@ -173,6 +174,7 @@ Auto-detect infographic candidates from text content:
 | Decreasing stages | Funnel |
 
 **Mode: AGGRESSIVE** - convert all mappable content. Use `templates/charts/` Python templates.
+Screenshot pipeline: `render_chart_page()` → Playwright `.capture-root` element screenshot → auto-crop. Full protocol → [references/chart-capture-pipeline.md](references/chart-capture-pipeline.md)
 
 ### Phase 1.5: Design System Resolution
 
@@ -382,7 +384,8 @@ Deck rhythm is validated before entering rendering.
 
 ```
 Priority 1: Original MD images -> copy to assets/, absolute path reference. NEVER replace.
-Priority 2: HTML code generation -> charts (templates/charts/), diagrams, compositions -> Playwright screenshot
+Priority 2: HTML code generation -> render_chart_page() -> Playwright .capture-root element screenshot -> auto-crop (trim.py)
+            Full 8-phase protocol -> references/chart-capture-pipeline.md
 Priority 3: LLM image generation -> insight-based prompt -> Native gen (Cursor) / task() (OpenCode) / HTML concept fallback
 ```
 
@@ -597,7 +600,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 | Target | Method |
 |--------|--------|
 | Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) -> Priority 2: HTML concept + Playwright -> Priority 3: LLM image generation fallback when native path unavailable |
-| Charts/infographics | HTML templates (`templates/charts/`) -> Playwright screenshot |
+| Charts/infographics | `render_chart_page()` → Playwright `.capture-root` screenshot → `trim.py` auto-crop ([capture pipeline](references/chart-capture-pipeline.md)) |
 | Diagrams/flowcharts | HTML/SVG |
 | Original MD images | Copy to `assets/`, reference via absolute path in HTML |
 
@@ -615,6 +618,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 | `task()` background gen | OpenCode image generation via background agent | OpenCode only |
 | `playwright` | HTML rendering / screenshots | **Required** (npm) |
 | `sharp` | Image post-processing | **Required** (npm) |
+| `Pillow` | Chart screenshot auto-crop (`trim.py`) | Optional (pip) |
 
 ---
 
