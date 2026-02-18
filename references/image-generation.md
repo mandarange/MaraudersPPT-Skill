@@ -377,26 +377,34 @@ html = render_chart_page("bar_chart", [
 ```javascript
 const { chromium } = require('playwright');
 const fs = require('fs');
-const path = require('path');
 
 async function captureChart(html, outputPath) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   await page.setContent(html, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
 
   const el = await page.locator('.capture-root');
-  const box = await el.boundingBox();
+  let box = await el.boundingBox();
   if (!box) throw new Error('.capture-root not found');
 
   await page.setViewportSize({
-    width:  Math.ceil(box.x + box.width  + 20),
-    height: Math.ceil(box.y + box.height + 20),
+    width:  Math.ceil(box.x + box.width  + 48),
+    height: Math.ceil(box.y + box.height + 48),
   });
   await page.waitForTimeout(100);
+  box = await el.boundingBox();  // re-measure after reflow
 
   // Element screenshot — NEVER use page.screenshot() or fullPage
   await el.screenshot({ path: outputPath, type: 'png' });
+
+  // Dimension sanity check — catches wrong capture method
+  const sharp = require('sharp');
+  const meta = await sharp(outputPath).metadata();
+  if (meta.width > box.width * 1.5 || meta.height > box.height * 1.5) {
+    fs.unlinkSync(outputPath);
+    throw new Error('PNG > 1.5× bbox — re-capture with element screenshot');
+  }
 
   const stat = fs.statSync(outputPath);
   if (stat.size === 0) throw new Error(`Empty file: ${outputPath}`);
@@ -409,7 +417,7 @@ async function captureChart(html, outputPath) {
 Optional auto-crop (requires Pillow):
 ```python
 from templates.charts.trim import autocrop
-autocrop("chart-05-throughput.png", pad=8)
+autocrop("chart-05-throughput.png", padding=4, threshold=250)
 ```
 
 HTML concept visual code (retained fallback for non-chart visuals):

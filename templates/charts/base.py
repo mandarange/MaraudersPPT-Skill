@@ -20,16 +20,21 @@ CONTENT_CSS = """\
 _CAPTURE_CONTENT_CSS = """\
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
+  margin: 0;
+  padding: 0;
   width: fit-content;
   height: fit-content;
+  display: inline-block;
+  overflow: hidden;
   background: #FFFFFF;
 }
 .capture-root {
+  display: inline-block;
   position: relative !important;
   left: 0 !important;
   top: 0 !important;
-  width: var(--layout-content-width, 1720px);
-  height: var(--layout-content-height, 760px);
+  margin: 0;
+  padding: 0;
   font-family: var(--font-primary, %(font)s);
   color: var(--color-text, #1A1A1A);
   background: var(--color-bg, #FFFFFF);
