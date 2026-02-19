@@ -416,12 +416,54 @@ Stored inside `assets/` — single source of truth for every image file.
 - **PDF Layout Reliability Rule**: For vertical centering and precise positioning, use `position: absolute` with explicit offsets (e.g., `top: 50%; transform: translateY(-50%)`) or fixed pixel values. Avoid relying solely on `flexbox` for 1080px height distribution, as headless PDF renderers may miscalculate viewport height.
 - Use SVG components for: curved shapes, arrow markers, trend lines, crisp icons at any scale
 
-#### Phase 4.4 PDF Rendering
+#### Phase 4.4 PDF Rendering (Single Unified PDF)
 
-- Playwright opens each HTML slide (1920x1080 viewport)
-- Renders each slide to a single-page PDF
-- All pages combined into final deck PDF
-- Tables, charts, images all rendered natively in HTML/CSS - pixel-perfect in PDF output
+> **CRITICAL: The final output MUST be ONE combined PDF file per deck, NOT separate PDFs per slide.**
+> Individual per-slide PDFs are a CRITICAL BUG — the user expects a single unified document.
+
+**Method: Combined HTML → Single PDF**
+
+1. **Assemble a single HTML document** containing ALL slides in order:
+   ```html
+   <!DOCTYPE html>
+   <html>
+   <head>
+     <style>
+       @page { size: 1920px 1080px; margin: 0; }
+       .slide-page { width: 1920px; height: 1080px; position: relative; overflow: hidden; page-break-after: always; }
+       .slide-page:last-child { page-break-after: auto; }
+     </style>
+   </head>
+   <body>
+     <!-- Slide 1 HTML content wrapped in .slide-page -->
+     <div class="slide-page">...</div>
+     <!-- Slide 2 HTML content wrapped in .slide-page -->
+     <div class="slide-page">...</div>
+     <!-- ... all remaining slides ... -->
+   </body>
+   </html>
+   ```
+
+2. **Render to PDF with Playwright** (one call, one file):
+   ```javascript
+   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+   await page.setContent(combinedHtml, { waitUntil: 'networkidle' });
+   await page.pdf({
+     path: outputPdfPath,
+     width: '1920px',
+     height: '1080px',
+     printBackground: true,
+     preferCSSPageSize: true
+   });
+   ```
+
+3. **Result**: One `v{M}.{m}_{filename}.pdf` with N pages — each page = one slide.
+
+**Appendix PDF**: Same method — combine all appendix slide HTMLs into one HTML, render one `_appendix.pdf`.
+
+**PROHIBITED**: Writing individual `slide_01.pdf`, `slide_02.pdf`, etc. as final output. Intermediate per-slide files must be cleaned up if used for any reason.
+
+- Tables, charts, images all rendered natively in HTML/CSS — pixel-perfect in PDF output
 
 ### Phase 5: Verification + Output (Layout Integrity + Visual QA + Diagnostic)
 

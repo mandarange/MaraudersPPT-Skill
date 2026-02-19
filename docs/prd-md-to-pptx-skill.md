@@ -348,9 +348,10 @@ Using Playwright-based PDF rendering:
    - Apply design/theme via CSS (design-spec.md compliant)
    - Use Pretendard font (fallback: Apple SD Gothic Neo → Malgun Gothic → Noto Sans KR)
 2. Render HTML slides to PDF via Playwright:
-   - Open each HTML slide in headless browser (1920×1080 viewport)
-   - Print each slide to single-page PDF
-   - Combine all pages into final deck PDF
+   - Combine all slide HTMLs into a single HTML document with `page-break-after: always` between slides
+   - Open combined HTML in headless browser (1920×1080 viewport)
+   - Render to ONE unified PDF via `page.pdf({ width: '1920px', height: '1080px', printBackground: true, preferCSSPageSize: true })`
+   - Result: single PDF file with N pages (one page per slide)
 3. Tables and charts rendered natively in HTML/CSS — no separate conversion needed
 4. Save resulting PDF file
 ```
@@ -764,11 +765,11 @@ interface AiMapOptions {
 
 ### HTML→PDF Workflow
 
-1. Create individual HTML files per slide (1920×1080, 16:9)
-2. Launch Playwright headless browser
-3. Navigate to each HTML slide file
-4. Render to single-page PDF per slide
-5. Combine all single-page PDFs into final deck
+1. Create individual HTML per slide during generation (1920×1080, 16:9)
+2. Combine all slide HTMLs into a single HTML document with CSS `page-break-after: always` between slides
+3. Launch Playwright headless browser
+4. Open the combined HTML and render to ONE unified PDF via `page.pdf({ width: '1920px', height: '1080px', printBackground: true, preferCSSPageSize: true })`
+5. Result: single PDF file with N pages — individual per-slide PDFs are NEVER the final output
 6. Tables, charts, and images rendered natively in HTML/CSS
 
 ### Design Principles (from rendering skill)

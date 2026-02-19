@@ -43,9 +43,9 @@ Wave 5 — Sequential (assembly + verification)
 ├── Image Manifest update (assets/image-manifest.json)
 ├── Assemble all slide HTMLs with final assets
 ├── Layout adaptation for slides receiving images
-├── PDF Rendering (Playwright)
-├── PDF Generation (Playwright page.pdf())
-├── Appendix PDF Generation
+├── Combine all deck slide HTMLs into single HTML (page-break-after: always)
+├── Render combined HTML → single deck PDF (Playwright page.pdf())
+├── Combine all appendix slide HTMLs into single HTML → single appendix PDF
 ├── Layout Integrity Verification (Phase 5.1)
 ├── Hard Gates check (Phase 5.2)
 ├── Visual QA (Phase 5.5)
