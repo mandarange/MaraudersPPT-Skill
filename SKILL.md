@@ -6,8 +6,8 @@ description: >
   Requires explicit "MaraudersMD2PPT" invocation - never self-activates.
   Phase-based pipeline with Semantic Analysis, Narrative Architecture, and Visual Blueprint.
   Maps heading hierarchies, tables, code blocks, images, and AI Hint blocks to 23 slide
-  layout types. Generates AI photorealistic images via native image generation (Cursor)
-  or background task delegation (OpenCode). Uses Section Cards and narrative roles to drive
+  layout types. AGGRESSIVELY generates AI photorealistic images for any slide lacking visual content via native image generation (Cursor)
+  or background task delegation (OpenCode). NEVER skip image generation. Uses Section Cards and narrative roles to drive
   action titles, accent words, visual coverage, and dual-output routing. Fully supports Korean/CJK
   text with Pretendard font.
 license: MIT
@@ -15,7 +15,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "2.2.0"
+  version: "2.2.2"
   author: "MaraudersPPT"
 ---
 
@@ -336,7 +336,7 @@ VisualBlueprint:
     type: string # hero-metric, single-statement, split-image-text, evidence-bullets, etc.
     dominant_element: string # number, image, text, chart
   image_strategy:
-    need: enum [original-md, chart, ai-generated, none]
+    need: enum [original-md, chart, ai-generated, none] # AGGRESSIVELY set to ai-generated if no other visual exists!
     treatment: enum [background-10%, background-15%, left-50%, full-bleed, top-30%, none]
     prompt_seed: string # insight-based, not keyword-based
     cache_lookup: object # Image Manifest cache check
@@ -389,7 +389,7 @@ Deck rhythm is validated before entering rendering.
 ```
 Priority 1: Original MD images -> copy to assets/, absolute path reference. NEVER replace.
 Priority 2: Charts and Diagrams -> Delegate to the `Marauders_ASCII2Chart_Skill` (https://github.com/mandarange/Marauders_ASCII2Chart_Skill.git) to convert ASCII/text data into Mermaid.js PNG captures.
-Priority 3: LLM image generation -> insight-based prompt -> Native gen (Cursor) / task() (OpenCode) / HTML concept fallback
+Priority 3: LLM image generation -> **AGGRESSIVELY generate AI images for ALL remaining text-heavy slides.** Use insight-based prompts. Native gen (Cursor) / task() (OpenCode) / HTML concept fallback.
 ```
 
 #### Phase 4.2 Image Manifest (`assets/image-manifest.json`)
@@ -416,7 +416,8 @@ Stored inside `assets/` — single source of truth for every image file.
 - Individual HTML per slide, CSS inline, 16:9 at 1920x1080px
 - Composition templates for structured layouts
 - Pretendard font with fallback chain
-- **PDF Layout Reliability Rule**: For vertical centering and precise positioning, use `position: absolute` with explicit offsets (e.g., `top: 50%; transform: translateY(-50%)`) or fixed pixel values. Avoid relying solely on `flexbox` for 1080px height distribution, as headless PDF renderers may miscalculate viewport height.
+- **PDF Layout Reliability Rule**: For vertical centering and precise positioning, use `position: absolute` with explicit offsets (e.g., `top: 50%; transform: translateY(-50%)`) or fixed pixel values.
+- **Top-Aligned Headers**: Titles and headers must be fixed to the top margin. Do not center them vertically with the body content. Ensure maximum space efficiency.
 - Use SVG components for: curved shapes, arrow markers, trend lines, crisp icons at any scale
 
 #### Phase 4.4 PDF Rendering (Single Unified PDF)
@@ -598,7 +599,9 @@ After all slide HTML is generated:
 
 ### Layout
 
-- 16:9, 1920×1080px, margins ≥0.7", 8px grid
+- 16:9, 1920×1080px, margins ≥0.7" (use 8px grid system)
+- **Header Positioning**: ALWAYS position slide headers/titles at the top of the slide. NEVER mindlessly center-align all content vertically; utilize the slide space efficiently.
+- **Visual Density**: EVERY presentation slide MUST contain 1 to 2 visual elements (such as charts, diagrams, or AI-generated reference images). No slide should consist entirely of text.
 - Accent `#D94F4F`: word-level Bold only, max 1/slide, prohibited on titles/backgrounds
 
 ### Anti-Vibe-Coding Rules
@@ -660,7 +663,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 | Target                 | Method                                                                                                                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) -> Priority 2: HTML concept + Playwright -> Priority 3: LLM image generation fallback when native path unavailable |
+| Slides without visuals | **PROACTIVELY and AGGRESSIVELY generate AI images for ANY slide lacking visual content.** Priority: Native image gen (Cursor/Antigravity) -> background task (OpenCode) -> HTML concept fallback. |
 | Charts/infographics    | Delegate to `https://github.com/mandarange/Marauders_ASCII2Chart_Skill.git` to convert ASCII/text data into Mermaid.js PNG diagrams.                                              |
 | Diagrams/flowcharts    | Delegate to `https://github.com/mandarange/Marauders_ASCII2Chart_Skill.git` to convert text/ASCII flowcharts into Mermaid.js PNG diagrams.                                      |
 | Original MD images     | Copy to `assets/`, reference via absolute path in HTML                                                                                                                                            |

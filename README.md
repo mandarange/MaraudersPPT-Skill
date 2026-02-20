@@ -78,7 +78,7 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 | **Anti-Vibe-Coding Design**     | No rounded cards, no gray backgrounds, no AI dashboard aesthetics — McKinsey/BCG quality                    |
 | **16px Minimum Font**           | All chart/infographic content text ≥ 16px (exceptions: slide numbers 10pt, captions 12pt)                   |
 | **Mandatory Original Images**   | All `![alt](path)` images from the MD file are inserted into slides (never omitted)                         |
-| **AI Image Generation**         | Auto-generates photorealistic content images via Cursor native image gen / OpenCode background tasks        |
+| **AI Image Generation**         | PROACTIVELY generates photorealistic content images via Cursor native image gen / OpenCode background tasks. NEVER skip image generation. |
 | **Persistent Image Reuse**      | Generated images are cached per page key and reused across reruns unless user explicitly requests refresh   |
 | **Layout Integrity**            | Auto-validates overflow/overlap/margin violations + up to 3 regeneration attempts                           |
 | **Slide Flow Optimization**     | MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX rules applied                                                       |
@@ -103,6 +103,8 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 - **1–2 topics per slide**, bullet-point and quantitative style (max 4 bullets, optimal 3)
 - 16:9 aspect ratio, 1920×1080px high resolution
 - 8px grid-based consistent spacing system
+- **Header Positioning**: ALWAYS position slide headers/titles at the top. NEVER mindlessly center-align content vertically; use space efficiently.
+- **Visual Density**: EVERY slide MUST contain 1 to 2 visual elements (charts, diagrams, or AI-generated reference images).
 - **Layout rhythm** — variant selection algorithm prevents consecutive same-feel slides
 - **Editorial design, not decoration** — thin dividers, captions, exhibit labels, running headers instead of blobs/glows/gradients
 - **Original MD images are mandatory** — `![alt](path)` images must never be omitted

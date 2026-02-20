@@ -1,6 +1,6 @@
 {
   "name": "maraudersppt-skill",
-  "version": "2.2.0",
+  "version": "2.2.2",
   "description": "A Claude Code Skill that automatically converts Markdown documents into presentation-quality PDF files.",
   "directories": {
     "doc": "docs"
