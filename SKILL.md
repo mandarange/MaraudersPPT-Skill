@@ -15,7 +15,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "2.1.3"
+  version: "2.2.0"
   author: "MaraudersPPT"
 ---
 
@@ -388,8 +388,7 @@ Deck rhythm is validated before entering rendering.
 
 ```
 Priority 1: Original MD images -> copy to assets/, absolute path reference. NEVER replace.
-Priority 2: HTML code generation -> render_chart_page() -> Playwright .capture-root element screenshot -> auto-crop (trim.py)
-            Full 8-phase protocol -> references/chart-capture-pipeline.md
+Priority 2: Charts and Diagrams -> Delegate to the `Marauders_ASCII2Chart_Skill` (https://github.com/mandarange/Marauders_ASCII2Chart_Skill.git) to convert ASCII/text data into Mermaid.js PNG captures.
 Priority 3: LLM image generation -> insight-based prompt -> Native gen (Cursor) / task() (OpenCode) / HTML concept fallback
 ```
 
@@ -662,8 +661,8 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 | Target                 | Method                                                                                                                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) -> Priority 2: HTML concept + Playwright -> Priority 3: LLM image generation fallback when native path unavailable |
-| Charts/infographics    | `render_chart_page()` → Playwright `.capture-root` screenshot → `trim.py` auto-crop ([capture pipeline](references/chart-capture-pipeline.md))                                                    |
-| Diagrams/flowcharts    | HTML/SVG                                                                                                                                                                                          |
+| Charts/infographics    | Delegate to `https://github.com/mandarange/Marauders_ASCII2Chart_Skill.git` to convert ASCII/text data into Mermaid.js PNG diagrams.                                              |
+| Diagrams/flowcharts    | Delegate to `https://github.com/mandarange/Marauders_ASCII2Chart_Skill.git` to convert text/ASCII flowcharts into Mermaid.js PNG diagrams.                                      |
 | Original MD images     | Copy to `assets/`, reference via absolute path in HTML                                                                                                                                            |
 
 **Pipeline**: Generate PNG -> save to `{output_dir}/assets/` -> reference in HTML via `<img src="/absolute/path/...">` -> Playwright renders HTML slides to PDF with all images embedded.
@@ -678,9 +677,8 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 | ----------------------- | ------------------------------------------------------------ | -------------------- |
 | Native image gen        | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
 | `task()` background gen | OpenCode image generation via background agent               | OpenCode only        |
-| `playwright`            | HTML rendering / screenshots                                 | **Required** (npm)   |
-| `sharp`                 | Image post-processing                                        | **Required** (npm)   |
-| `Pillow`                | Chart screenshot auto-crop (`trim.py`)                       | Optional (pip)       |
+| `playwright`            | HTML rendering / PDF generation             | **Required**     |
+| `sharp`                 | Image post-processing (rasterization)                        |     **Required**     |
 
 ---
 

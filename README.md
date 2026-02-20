@@ -207,7 +207,7 @@ html = render_chart("bar_chart", [
 
 | Package                 | Role                                                         |       Required       |
 | ----------------------- | ------------------------------------------------------------ | :------------------: |
-| `playwright`            | HTML rendering / PDF generation / chart screenshots          |     **Required**     |
+| `playwright`            | HTML rendering / PDF generation             | **Required**     |
 | `sharp`                 | Image post-processing (rasterization)                        |     **Required**     |
 | Native image gen        | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
 | `task()` background gen | OpenCode image generation via background agent               |    OpenCode only     |
