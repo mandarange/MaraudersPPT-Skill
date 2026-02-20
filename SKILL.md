@@ -14,7 +14,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "2.1.0"
+  version: "2.1.1"
   author: "MaraudersPPT"
 ---
 
