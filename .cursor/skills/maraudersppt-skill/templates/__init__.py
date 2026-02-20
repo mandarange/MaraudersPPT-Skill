@@ -1,1 +1,0 @@
-"""MaraudersPPT template package."""

@@ -53,9 +53,30 @@ class MarkdownParser:
         text = re.sub(r'^[ \t]*[-*+]\s+', '', text, flags=re.MULTILINE)
         text = re.sub(r'^[ \t]*\d+\.\s+', '', text, flags=re.MULTILINE)
         # Remove code fences and backticks
-        text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)
+        text = re.sub(r'```\w*\n?', '', text)
         text = re.sub(r'`', '', text)
         # Handle links: [text](url) -> text
         text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)
         
         return text.strip()
+
+    @staticmethod
+    def split_by_h2(content: str) -> Dict[str, str]:
+        """Segments markdown content by H2 headers.
+        Returns a dict mapping section title (e.g. '## Background') to its full text block.
+        """
+        # Split by ## at the start of a line
+        sections = re.split(r'^(##\s+.*)$', content, flags=re.MULTILINE)
+        
+        parsed_sections = {}
+        # First element is usually content before the first H2 (like H1 title)
+        if sections and sections[0].strip():
+            parsed_sections['__pre_h2__'] = sections[0].strip()
+            
+        for i in range(1, len(sections), 2):
+            h2_title = sections[i].strip()
+            # The next element in split is the content of this H2
+            h2_content = sections[i+1].strip() if i+1 < len(sections) else ""
+            parsed_sections[h2_title] = h2_content
+            
+        return parsed_sections

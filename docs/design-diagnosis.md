@@ -25,6 +25,7 @@ Every `image-text` slide uses the same 60:40 split. Every `kpi-cards` slide
 uses the same grid. In a 15+ slide deck, this creates deadly visual repetition.
 
 **Evidence**:
+
 - `SKILL.md` defines types but zero variants per type
 - `docs/design-spec.md` Section 6 lists layouts with single composition each
 - No variant selection logic exists anywhere in the codebase
@@ -33,6 +34,7 @@ uses the same grid. In a 15+ slide deck, this creates deadly visual repetition.
 
 **What humans do differently**:
 Professional designers use 2-3 compositions per layout type:
+
 - Bullet-list: left-aligned vs. two-column vs. numbered-with-dividers
 - Image-text: 60:40 vs. 40:60 vs. full-bleed with text overlay
 - KPI: horizontal row vs. stacked vs. hero-number-with-context
@@ -50,6 +52,7 @@ Colors, font sizes, spacing, radii — all are literal values scattered across 1
 This makes theming impossible and creates maintenance nightmares.
 
 **Evidence**:
+
 ```python
 # base.py — hardcoded content area
 CONTENT_CSS = """
@@ -84,6 +87,7 @@ omits ALL other editorial details that distinguish professional presentations
 from templates:
 
 **Missing elements** (that human designers always include):
+
 1. **Running header / section label** — small text showing current section name
    (e.g., "01 Background" in top-left corner, 10pt, light gray)
 2. **Folio / page indicator** — beyond just "3/24", professional decks show
@@ -109,6 +113,7 @@ in `design-spec.md` Section 3.3 (font definition only, no placement rules).
 "consulting layer" that makes data slides valuable:
 
 **What's missing**:
+
 1. **Insight caption** — One-line interpretation below/above the chart
    ("Key: Q1 outperformed all quarters at 95%, +17pt above average")
 2. **Single-point emphasis** — Only `is-max` and `is-accent` exist (binary).
@@ -119,6 +124,7 @@ in `design-spec.md` Section 3.3 (font definition only, no placement rules).
    with bridge lines or waterfall connections
 
 **Evidence from chart templates**:
+
 ```python
 # bar_chart.py — renders bars and values, nothing more
 # No annotation parameter, no insight_caption, no callout support
@@ -143,11 +149,13 @@ A bar chart without an insight caption is just data, not communication.
 but NO treatment pipeline:
 
 **Current behavior** (from `image-generation.md`):
+
 - Images get `object-fit: cover` with fixed dimensions
 - Title/closing backgrounds get opacity 10-15%
 - That's it — no crop strategy, no tone unification, no caption
 
 **What's missing**:
+
 1. **Crop-to-focus**: Centering on the subject, using rule-of-thirds
 2. **Tone unification**: Mono/desaturated filter to match deck palette
 3. **Readability overlay**: When text sits on image, scrim or gradient overlay
@@ -169,6 +177,7 @@ Every deck looks identical at the macro level. Professional presentation systems
 offer at minimum 3-5 theme presets that vary color temperature, type weight, and motif.
 
 **Evidence**:
+
 - `design-spec.md` Section 2: Single palette (#FFFFFF, #1A1A1A, #D94F4F)
 - `SKILL.md` Design Rules Summary: same palette repeated
 - PRD Section 7.3 explicitly says: "Theme presets (dark, minimal, vibrant) have been removed.
@@ -183,23 +192,28 @@ all look identical. The user cannot differentiate their output's "personality."
 ## Secondary Issues
 
 ### 6a. Deck Rhythm Validation Without Generation
+
 `SKILL.md` Phase 3.2 defines `DeckRhythm` validation rules
 (`max_consecutive_same_density: 2`, `visual_variety_score >= 0.6`)
 but provides NO mechanism to ACHIEVE these targets.
 Validation without generation capability = guaranteed failures.
 
 ### 6b. No Editorial Grid Beyond 8px Snap
+
 The 8px grid system handles spacing but not editorial layout:
+
 - No column grid (12-column or similar) for asymmetric compositions
 - No baseline grid for typography alignment across slides
 - No named regions (title zone, body zone, footer zone defined but not as named CSS areas)
 
 ### 6c. Comparison Template Uses ::before (Anti-Pattern)
+
 `comparison.py` line 52-60 uses `::before` pseudo-element for the divider line,
 which is listed as a prohibited pattern in `design-spec.md` Section 1.1
 ("Forbidden Pattern: `::before` decorative bar").
 
 ### 6d. Process Flow Uses Text Arrow Instead of SVG
+
 `process_flow.py` uses Unicode `→` character for arrows between steps,
 while `svg-components.md` Section 2.4 provides proper SVG arrow markers.
 Text arrows render inconsistently across fonts and sizes.
@@ -208,26 +222,26 @@ Text arrows render inconsistently across fonts and sizes.
 
 ## Priority Fix Order
 
-| Priority | Root Cause | Effort | Impact |
-|:--------:|-----------|:------:|:------:|
-| 1 | Layout Variant System (RC1) | High | Highest — eliminates repetition |
-| 2 | Design Token System (RC2) | High | Enables all downstream work |
-| 3 | Editorial Details (RC3) | Medium | "Human touch" differentiator |
-| 4 | Chart Annotations (RC4) | Medium | Consulting-quality data slides |
-| 5 | Theme Packs (RC6) | Medium | Personality/customization |
-| 6 | Image Treatment (RC5) | Medium | Professional image handling |
+| Priority | Root Cause                  | Effort |             Impact              |
+| :------: | --------------------------- | :----: | :-----------------------------: |
+|    1     | Layout Variant System (RC1) |  High  | Highest — eliminates repetition |
+|    2     | Design Token System (RC2)   |  High  |   Enables all downstream work   |
+|    3     | Editorial Details (RC3)     | Medium |  "Human touch" differentiator   |
+|    4     | Chart Annotations (RC4)     | Medium | Consulting-quality data slides  |
+|    5     | Theme Packs (RC6)           | Medium |    Personality/customization    |
+|    6     | Image Treatment (RC5)       | Medium |   Professional image handling   |
 
 ---
 
 ## Measurement: Before vs After
 
-| Metric | Current | Target |
-|--------|:-------:|:------:|
-| Layout variants per type | 1 | 2-3 |
-| Themes available | 1 | 5 |
-| Design tokens (centralized) | 0 | 50+ |
-| Editorial details per slide | 1 (slide number) | 4+ (folio, section label, figure#, source) |
-| Chart annotation support | Binary (max/accent) | Full (caption, callout, reference line) |
-| Image treatment strategies | 1 (size+fit) | 4 (crop, tone, overlay, panel) |
-| Human-likeness score system | None | 5-axis automated scoring |
-| visual_variety_score achieved | ~0.3 (estimated) | >= 0.75 |
+| Metric                        |       Current       |                   Target                   |
+| ----------------------------- | :-----------------: | :----------------------------------------: |
+| Layout variants per type      |          1          |                    2-3                     |
+| Themes available              |          1          |                     5                      |
+| Design tokens (centralized)   |          0          |                    50+                     |
+| Editorial details per slide   |  1 (slide number)   | 4+ (folio, section label, figure#, source) |
+| Chart annotation support      | Binary (max/accent) |  Full (caption, callout, reference line)   |
+| Image treatment strategies    |    1 (size+fit)     |       4 (crop, tone, overlay, panel)       |
+| Human-likeness score system   |        None         |          5-axis automated scoring          |
+| visual_variety_score achieved |  ~0.3 (estimated)   |                  >= 0.75                   |

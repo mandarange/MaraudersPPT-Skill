@@ -23,20 +23,20 @@ Every piece of text on a slide must pass this test:
 These are not "maximums before overflow." These are **good slide design limits.**
 Exceeding these means the content is poorly distilled — fix the content, not the layout.
 
-| Layout | Title | Body | Bullets | Words/Bullet |
-|--------|:-----:|:----:|:-------:|:------------:|
-| `title` | 8 words | 10 words (subtitle) | — | — |
-| `executive-summary` | 6 words | 15 words (conclusion) | — | — |
-| `section-divider` | 6 words | — | — | — |
-| `text-body` | 10 words | 40 words | — | — |
-| `bullet-list` | 10 words | — | **3** (max 4) | **7** |
-| `image-text` | 8 words | — | 3 | **5** |
-| `table` | 8 words | — | — | — |
-| `code` | 8 words | — | — | — |
-| `ai-hint` | 8 words | 30 words | — | — |
-| `quote` | — | 20 words (quote) | — | — |
-| `checklist` | 8 words | — | 4 items | 6 |
-| `closing` | 8 words | — | 3 steps | 5 |
+| Layout              |  Title   |         Body          |    Bullets    | Words/Bullet |
+| ------------------- | :------: | :-------------------: | :-----------: | :----------: |
+| `title`             | 8 words  |  10 words (subtitle)  |       —       |      —       |
+| `executive-summary` | 6 words  | 15 words (conclusion) |       —       |      —       |
+| `section-divider`   | 6 words  |           —           |       —       |      —       |
+| `text-body`         | 10 words |       40 words        |       —       |      —       |
+| `bullet-list`       | 10 words |           —           | **3** (max 4) |    **7**     |
+| `image-text`        | 8 words  |           —           |       3       |    **5**     |
+| `table`             | 8 words  |           —           |       —       |      —       |
+| `code`              | 8 words  |           —           |       —       |      —       |
+| `ai-hint`           | 8 words  |       30 words        |       —       |      —       |
+| `quote`             |    —     |   20 words (quote)    |       —       |      —       |
+| `checklist`         | 8 words  |           —           |    4 items    |      6       |
+| `closing`           | 8 words  |           —           |    3 steps    |      5       |
 
 **Korean/CJK**: Apply **0.7x multiplier** (e.g., 7 words → 한국어 약 5단어/12음절).
 
@@ -107,11 +107,11 @@ Source: "For questions, contact team@example.com or open an issue on GitHub."
 
 Sections with ≤2 content lines (e.g., "License", "Contributing", "Contact"):
 
-| Source Lines | Action |
-|:------------:|--------|
-| 0 lines (heading only) | Merge heading into previous slide's footer/badge area |
-| 1 line | Merge as badge into previous slide, OR combine with other short sections into `icon-grid` |
-| 2 lines | Convert to 1–2 keyword bullets, merge into previous slide if <15 total words |
+|      Source Lines      | Action                                                                                    |
+| :--------------------: | ----------------------------------------------------------------------------------------- |
+| 0 lines (heading only) | Merge heading into previous slide's footer/badge area                                     |
+|         1 line         | Merge as badge into previous slide, OR combine with other short sections into `icon-grid` |
+|        2 lines         | Convert to 1–2 keyword bullets, merge into previous slide if <15 total words              |
 
 **NEVER** create a standalone slide for ≤15 words of body content.
 
@@ -189,6 +189,7 @@ DEDUPLICATION ALGORITHM:
 ```
 
 **Examples:**
+
 ```
 ❌ WRONG (title duplicated in body):
    Title: "Marketplace Listing Features"
@@ -210,15 +211,16 @@ DEDUPLICATION ALGORITHM:
 
 > **Raw markdown syntax must never appear in rendered slide text.**
 
-```
+````
 PROHIBITED TOKENS IN FINAL TEXT:
   ###, ##, #
   ``` , `
   - , * , + , 1. (as literal list markers)
   [text](url) (raw markdown link form)
-```
+````
 
 **Sanitization rule**: Convert markdown structure to layout semantics before rendering text:
+
 - headings → title/sub-header text without `#`
 - lists → bullets without source markers
 - links → display text or shortened URL label
@@ -230,16 +232,16 @@ PROHIBITED TOKENS IN FINAL TEXT:
 
 ## Anti-Patterns (ALL PROHIBITED)
 
-| What | Why It's Wrong | Fix |
-|------|---------------|-----|
-| Full sentences on slides | Audience reads instead of listens | Keyword fragments only |
-| 5+ bullets | Cognitive overload | Max 3 (rarely 4) |
-| Bullet longer than 1 line | It's a paragraph disguised as a bullet | Condense to ≤7 words |
-| Prose paragraphs on slides | This is a document, not a slide | Extract 2-3 keyword bullets |
-| Repeating title content in body | Redundancy wastes space | Title = conclusion, body = evidence |
-| **Ellipsis truncation (`...`)** | **Content destruction, meaning lost** | **Rewrite as complete keyword fragment** |
-| Filler words ("In order to", "It is important that") | Zero information value | Delete completely |
-| **Deleting paragraphs entirely** | **Content loss — empty slides** | **Convert to keyword bullets FIRST** |
-| **Empty slide body** | **Critical rendering failure** | **Re-extract from source, merge, or add visual** |
-| **1-line section as standalone slide** | **Wasted slide, poor flow** | **Merge via SHORT-SECTION-MERGE** |
-| **Title text repeated in bullets** | **Information duplication, wasted space** | **Title = conclusion, body = evidence** |
+| What                                                 | Why It's Wrong                            | Fix                                              |
+| ---------------------------------------------------- | ----------------------------------------- | ------------------------------------------------ |
+| Full sentences on slides                             | Audience reads instead of listens         | Keyword fragments only                           |
+| 5+ bullets                                           | Cognitive overload                        | Max 3 (rarely 4)                                 |
+| Bullet longer than 1 line                            | It's a paragraph disguised as a bullet    | Condense to ≤7 words                             |
+| Prose paragraphs on slides                           | This is a document, not a slide           | Extract 2-3 keyword bullets                      |
+| Repeating title content in body                      | Redundancy wastes space                   | Title = conclusion, body = evidence              |
+| **Ellipsis truncation (`...`)**                      | **Content destruction, meaning lost**     | **Rewrite as complete keyword fragment**         |
+| Filler words ("In order to", "It is important that") | Zero information value                    | Delete completely                                |
+| **Deleting paragraphs entirely**                     | **Content loss — empty slides**           | **Convert to keyword bullets FIRST**             |
+| **Empty slide body**                                 | **Critical rendering failure**            | **Re-extract from source, merge, or add visual** |
+| **1-line section as standalone slide**               | **Wasted slide, poor flow**               | **Merge via SHORT-SECTION-MERGE**                |
+| **Title text repeated in bullets**                   | **Information duplication, wasted space** | **Title = conclusion, body = evidence**          |

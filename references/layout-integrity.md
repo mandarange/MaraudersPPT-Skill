@@ -36,14 +36,15 @@ Margins: 0.7" = 67.2px (round to 68px) on all sides
 
 Based on Pretendard font metrics at standard sizes:
 
-| Area | Dimensions | At 18pt (body) | At 16pt (min body) | At 24pt (title) |
-|------|-----------|:--------------:|:------------------:|:---------------:|
-| Title | 1784 × 120px | ~5 lines | ~6 lines | **~3 lines** |
-| Body (full) | 1784 × 724px | ~25 lines | ~29 lines | — |
-| Body (image-text, text side) | 860 × 724px | ~25 lines (narrow) | ~29 lines | — |
-| Body (image-text, text side, Korean) | 860 × 724px | ~20 lines | ~23 lines | — |
+| Area                                 | Dimensions   |   At 18pt (body)   | At 16pt (min body) | At 24pt (title) |
+| ------------------------------------ | ------------ | :----------------: | :----------------: | :-------------: |
+| Title                                | 1784 × 120px |      ~5 lines      |      ~6 lines      |  **~3 lines**   |
+| Body (full)                          | 1784 × 724px |     ~25 lines      |     ~29 lines      |        —        |
+| Body (image-text, text side)         | 860 × 724px  | ~25 lines (narrow) |     ~29 lines      |        —        |
+| Body (image-text, text side, Korean) | 860 × 724px  |     ~20 lines      |     ~23 lines      |        —        |
 
 **Character estimates per line (Pretendard):**
+
 - English at 18pt: ~70 characters per line (1784px width)
 - Korean at 18pt: ~45 characters per line (wider glyphs)
 - English at 16pt: ~80 characters per line
@@ -51,14 +52,14 @@ Based on Pretendard font metrics at standard sizes:
 
 ## 7.3 Verification Checklist (Auto-Run After EACH Slide)
 
-| # | Verification Item | On Failure | Max Attempts |
-|---|-------------------|-----------|:------------:|
-| 1 | **Text within body area** (y + height ≤ 944px) | Font reduction cascade | 3 |
-| 2 | **Title within title area** (y + height ≤ 188px) | Rewrite title shorter (NEVER truncate with `...`) | 1 |
-| 3 | **No element overlap** (bounding box intersection = 0) | Reposition → regenerate | 3 |
-| 4 | **Margins respected** (all content x ≥ 68px, x+w ≤ 1852px) | Reposition | 1 |
-| 5 | **Image ratio preserved** (aspect ratio distortion < 2%) | Restore original ratio | 1 |
-| 6 | **Grid alignment** (coordinates snap to 8px grid) | Coordinate correction | 1 |
+| #   | Verification Item                                          | On Failure                                        | Max Attempts |
+| --- | ---------------------------------------------------------- | ------------------------------------------------- | :----------: |
+| 1   | **Text within body area** (y + height ≤ 944px)             | Font reduction cascade                            |      3       |
+| 2   | **Title within title area** (y + height ≤ 188px)           | Rewrite title shorter (NEVER truncate with `...`) |      1       |
+| 3   | **No element overlap** (bounding box intersection = 0)     | Reposition → regenerate                           |      3       |
+| 4   | **Margins respected** (all content x ≥ 68px, x+w ≤ 1852px) | Reposition                                        |      1       |
+| 5   | **Image ratio preserved** (aspect ratio distortion < 2%)   | Restore original ratio                            |      1       |
+| 6   | **Grid alignment** (coordinates snap to 8px grid)          | Coordinate correction                             |      1       |
 
 ## 7.4 Font Reduction Cascade (Last Resort Only)
 
@@ -87,14 +88,16 @@ Step 5: Force slide split (create continuation slide)
 .slide-body {
   word-wrap: break-word;
   overflow-wrap: break-word;
-  hyphens: none;            /* Never auto-hyphenate */
+  hyphens: none; /* Never auto-hyphenate */
 }
 
 /* URLs and code — monospace, controlled wrap */
-.slide-body a, .slide-body code, .slide-url {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14pt;          /* Slightly smaller than body for URLs */
-  word-break: normal;       /* Avoid mid-token breaks */
+.slide-body a,
+.slide-body code,
+.slide-url {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14pt; /* Slightly smaller than body for URLs */
+  word-break: normal; /* Avoid mid-token breaks */
   overflow-wrap: break-word;
   color: #555555;
 }
@@ -102,12 +105,12 @@ Step 5: Force slide split (create continuation slide)
 
 ### URL Display Policy
 
-| URL Length | Action |
-|:----------:|--------|
-| ≤40 chars | Display inline as-is |
-| 41–80 chars | Display on own line, full URL, monospace 14pt |
-| >80 chars | **Shorten to display label** — e.g., `open-vsx.org/.../marauders-map-md` |
-| Multiple URLs | Move to footer area or "Links" appendix slide |
+|  URL Length   | Action                                                                   |
+| :-----------: | ------------------------------------------------------------------------ |
+|   ≤40 chars   | Display inline as-is                                                     |
+|  41–80 chars  | Display on own line, full URL, monospace 14pt                            |
+|   >80 chars   | **Shorten to display label** — e.g., `open-vsx.org/.../marauders-map-md` |
+| Multiple URLs | Move to footer area or "Links" appendix slide                            |
 
 **Rule**: URLs must NEVER wrap mid-domain. If a URL must break, break at `/` path separators only.
 
@@ -144,10 +147,9 @@ IF text overflows the slide:
 
 After Phase 3 generates Visual Blueprints, validate:
 
-| # | Check | On Failure |
-|---|-------|-----------|
-| 1 | Composition `dominant_element` fits within body area | Re-select composition type |
-| 2 | `eye_flow.first` element within center 80% of slide | Reposition focal point |
-| 3 | Image `treatment` compatible with composition `type` | Adjust treatment or composition |
-| 4 | Deck rhythm score >= 0.6 | Swap adjacent slide compositions for variety |
-
+| #   | Check                                                | On Failure                                   |
+| --- | ---------------------------------------------------- | -------------------------------------------- |
+| 1   | Composition `dominant_element` fits within body area | Re-select composition type                   |
+| 2   | `eye_flow.first` element within center 80% of slide  | Reposition focal point                       |
+| 3   | Image `treatment` compatible with composition `type` | Adjust treatment or composition              |
+| 4   | Deck rhythm score >= 0.6                             | Swap adjacent slide compositions for variety |

@@ -1,4 +1,5 @@
 # Slide Image Generation (Phase 4)
+
 > Every content slide must include a visual element.
 > Phase 4 uses a strict 3-priority image system and manifest-based cache reuse.
 
@@ -27,12 +28,12 @@ mkdir -p "{output_dir}/assets"
 
 ### Asset Naming Convention
 
-| Image Type | Filename Pattern | Example |
-|-----------|-----------------|---------|
-| Original MD image (Priority 1) | `md-img-{NN}-{slug}.png` | `md-img-02-architecture.png` |
-| Chart / HTML screenshot (Priority 2) | `chart-{NN}-{slug}.png` | `chart-05-throughput.png` |
-| AI-generated image (Priority 3) | `ai-img-{NN}-{label}.png` | `ai-img-07-reliability.png` |
-| HTML concept fallback | `concept-{NN}-{slug}.png` | `concept-11-summary.png` |
+| Image Type                           | Filename Pattern          | Example                      |
+| ------------------------------------ | ------------------------- | ---------------------------- |
+| Original MD image (Priority 1)       | `md-img-{NN}-{slug}.png`  | `md-img-02-architecture.png` |
+| Chart / HTML screenshot (Priority 2) | `chart-{NN}-{slug}.png`   | `chart-05-throughput.png`    |
+| AI-generated image (Priority 3)      | `ai-img-{NN}-{label}.png` | `ai-img-07-reliability.png`  |
+| HTML concept fallback                | `concept-{NN}-{slug}.png` | `concept-11-summary.png`     |
 
 - `{NN}` = zero-padded slide index (01, 02, …)
 - `{slug}` / `{label}` = lowercase kebab-case derived from slide insight or section name (max 20 chars)
@@ -52,34 +53,38 @@ The manifest persists across re-runs. Cache hits are reused unless refresh is re
 ---
 
 ## 4.1 Visual Coverage Audit
+
 After Phase 3 (Visual Blueprint), audit all slides for visual completeness.
 
-| Slide Status | Has Visual? | Action Required | Priority |
-|-------------|:-----------:|-----------------|----------|
-| Has original MD image (`![alt](path)`) | ✅ | Copy to `assets/`, reference absolute path, never replace | Priority 1 |
-| Has chart/infographic intent | ⚠️ | Render with `templates/charts/` and screenshot | Priority 2 |
-| Has diagram/composition intent | ⚠️ | Render as HTML and screenshot | Priority 2 |
-| Has code block | ✅ | None (code itself is visual) | N/A |
-| Has table | ✅ | None (table itself is visual) | N/A |
-| `section-divider` | ✅ | None | N/A |
-| `title` without visual | ⚠️ | Add subtle conceptual visual | Priority 2 or 3 |
-| `text-body` without visual | ❌ | Must add visual support | Priority 2 or 3 |
-| `bullet-list` without visual | ❌ | Must add visual support | Priority 2 or 3 |
-| `ai-hint` without visual | ❌ | Must add visual support | Priority 2 or 3 |
-| `quote` without visual | ❌ | Must add visual support | Priority 2 or 3 |
-| `checklist` without visual | ❌ | Must add visual support | Priority 2 or 3 |
-| `closing` without visual | ⚠️ | Add subtle conceptual visual | Priority 2 or 3 |
+| Slide Status                           | Has Visual? | Action Required                                           | Priority        |
+| -------------------------------------- | :---------: | --------------------------------------------------------- | --------------- |
+| Has original MD image (`![alt](path)`) |     ✅      | Copy to `assets/`, reference absolute path, never replace | Priority 1      |
+| Has chart/infographic intent           |     ⚠️      | Render with `templates/charts/` and screenshot            | Priority 2      |
+| Has diagram/composition intent         |     ⚠️      | Render as HTML and screenshot                             | Priority 2      |
+| Has code block                         |     ✅      | None (code itself is visual)                              | N/A             |
+| Has table                              |     ✅      | None (table itself is visual)                             | N/A             |
+| `section-divider`                      |     ✅      | None                                                      | N/A             |
+| `title` without visual                 |     ⚠️      | Add subtle conceptual visual                              | Priority 2 or 3 |
+| `text-body` without visual             |     ❌      | Must add visual support                                   | Priority 2 or 3 |
+| `bullet-list` without visual           |     ❌      | Must add visual support                                   | Priority 2 or 3 |
+| `ai-hint` without visual               |     ❌      | Must add visual support                                   | Priority 2 or 3 |
+| `quote` without visual                 |     ❌      | Must add visual support                                   | Priority 2 or 3 |
+| `checklist` without visual             |     ❌      | Must add visual support                                   | Priority 2 or 3 |
+| `closing` without visual               |     ⚠️      | Add subtle conceptual visual                              | Priority 2 or 3 |
 
 Hard rule:
+
 ```
 text_only_slide_ratio == 0%  (content slides only)
 ```
 
 Metric scope:
+
 - `content_slides`: all slides except `title`, `section-divider`, `appendix-divider`, `closing`
 - `text_only_content_slides`: content slides with no image/chart/table/code/infographic visual
 
 ### Empty Slide Detection (Critical Guard)
+
 ```
 FOR each slide:
   IF slide.body_content is EMPTY AND slide.visual is NONE:
@@ -93,9 +98,11 @@ FOR each slide:
 ```
 
 ## 4.2 Image Prompt Derivation (from Insight Extraction)
+
 Prompt sources are Phase 1 Section Card fields, not keyword extraction.
 
 Primary fields:
+
 - `insight` (first priority)
 - `claim` (second priority)
 - `headline` (framing)
@@ -104,6 +111,7 @@ Primary fields:
 Do not use `primary_keyword` in v2.0.
 
 ### Prompt Derivation Formula
+
 ```
 visual_intent = interpret(insight, claim, role)
 domain = infer_domain(source_section, evidence, must_keep)
@@ -116,7 +124,9 @@ prompt =
 ```
 
 ### Prompt Construction Rules
+
 Every prompt must include:
+
 1. Core concept from `insight` or `claim`
 2. Domain modifier (business/infra/healthcare/finance/etc.)
 3. Style modifier (`professional`, `corporate presentation quality`)
@@ -124,6 +134,7 @@ Every prompt must include:
 5. Prohibition clause (`no text, no logos, no watermarks`)
 
 ### Insight -> Prompt Examples
+
 ```
 insight: "결제 한 건에 3초면 하루 10만건 기준 83시간 낭비"
 claim: "결제 지연은 운영 인건비와 고객 이탈을 동시에 유발한다"
@@ -135,20 +146,24 @@ prompt:
 ```
 
 ## 4.3 Image Manifest (`assets/image-manifest.json`)
+
 All reusable image outputs are tracked in a manifest file inside the `assets/` folder.
 
 Location:
+
 ```
 {output_dir}/assets/image-manifest.json
 ```
 
 The manifest is the single source of truth for every image in `assets/`. It enables:
+
 - **Cache reuse**: skip regeneration when hash matches and file exists
 - **Reproducibility**: `prompt` field shows exactly what was used to generate each AI image
 - **Auditability**: `generator` field shows which tool produced the image
 - **Diagnostics**: `file_size_bytes`, `width`, `height` for quality checks
 
 Schema:
+
 ```json
 {
   "version": "2.0",
@@ -215,31 +230,33 @@ Schema:
 
 ### Field Reference
 
-| Field | Type | Required | Description |
-|-------|------|:--------:|-------------|
-| `slide_id` | int | ✅ | Slide index (1-based) |
-| `slide_role` | string | ✅ | Narrative role from Phase 2 (hook/problem/solution/…) |
-| `type` | enum | ✅ | `ai-generated` / `chart` / `original-md` / `html-concept` |
-| `file_name` | string | ✅ | Filename only (for quick lookup) |
-| `file_path` | string | ✅ | Output-relative path (`assets/...`) |
-| `visual_intent` | string | ✅ | Visual intent from Phase 3 VisualBlueprint |
-| `prompt` | string | AI only | Exact prompt sent to generator. `null` for non-AI types |
-| `generator` | enum | ✅ | `cursor-native` / `opencode-task` / `playwright-chart` / `html-concept` / `source-copy` |
-| `width` | int | ✅ | Pixel width of saved file |
-| `height` | int | ✅ | Pixel height of saved file |
-| `file_size_bytes` | int | ✅ | File size in bytes (0 = corrupt, triggers regeneration) |
-| `content_hash` | string | AI only | `sha256(normalized_prompt + generator_id + render_params)`. `null` otherwise |
-| `data_hash` | string | chart only | `sha256(normalized_data + chart_type + template_version + style)`. `null` otherwise |
-| `source_insight` | string | ✅ | Human-readable origin note |
-| `created_at` | ISO string | ✅ | Generation timestamp |
-| `reusable` | bool | ✅ | Whether cache hit is allowed |
+| Field             | Type       |  Required  | Description                                                                             |
+| ----------------- | ---------- | :--------: | --------------------------------------------------------------------------------------- |
+| `slide_id`        | int        |     ✅     | Slide index (1-based)                                                                   |
+| `slide_role`      | string     |     ✅     | Narrative role from Phase 2 (hook/problem/solution/…)                                   |
+| `type`            | enum       |     ✅     | `ai-generated` / `chart` / `original-md` / `html-concept`                               |
+| `file_name`       | string     |     ✅     | Filename only (for quick lookup)                                                        |
+| `file_path`       | string     |     ✅     | Output-relative path (`assets/...`)                                                     |
+| `visual_intent`   | string     |     ✅     | Visual intent from Phase 3 VisualBlueprint                                              |
+| `prompt`          | string     |  AI only   | Exact prompt sent to generator. `null` for non-AI types                                 |
+| `generator`       | enum       |     ✅     | `cursor-native` / `opencode-task` / `playwright-chart` / `html-concept` / `source-copy` |
+| `width`           | int        |     ✅     | Pixel width of saved file                                                               |
+| `height`          | int        |     ✅     | Pixel height of saved file                                                              |
+| `file_size_bytes` | int        |     ✅     | File size in bytes (0 = corrupt, triggers regeneration)                                 |
+| `content_hash`    | string     |  AI only   | `sha256(normalized_prompt + generator_id + render_params)`. `null` otherwise            |
+| `data_hash`       | string     | chart only | `sha256(normalized_data + chart_type + template_version + style)`. `null` otherwise     |
+| `source_insight`  | string     |     ✅     | Human-readable origin note                                                              |
+| `created_at`      | ISO string |     ✅     | Generation timestamp                                                                    |
+| `reusable`        | bool       |     ✅     | Whether cache hit is allowed                                                            |
 
 ### Hash Policy
+
 - `type=ai-generated`: `content_hash = sha256(normalized_prompt + generator_id + render_params)`
 - `type=chart`: `data_hash = sha256(normalized_data + chart_type + template_version + style)`
 - `type=original-md` / `type=html-concept`: both hash fields `null` (non-regeneratable or deterministic)
 
 ### Cache Logic (Check -> Hit -> Miss -> Refresh)
+
 ```
 FOR each slide requiring visual:
   determine type by priority
@@ -261,6 +278,7 @@ Explicit refresh examples: `--refresh=all`, `--refresh=slide:7`, `--refresh=type
 Without explicit refresh request, cache hits must be reused.
 
 ### Manifest Integrity Rules
+
 - `version` must be `"2.0"`
 - `generated_at` updates on every run
 - `file_path` is always output-relative (`assets/...`)
@@ -270,19 +288,21 @@ Without explicit refresh request, cache hits must be reused.
 - `generator` must be one of the defined enum values — never `null`
 
 ## 4.4 Layout Adaptation When Image Is Added
+
 When a text-focused layout receives a visual, adapt while preserving claim hierarchy.
 
-| Original Layout | New Layout | Image Placement |
-|----------------|-----------|-----------------|
-| `text-body` | `image-text` | Left 50% image, right 50% text |
-| `bullet-list` | `image-text` | Left 50% image, right 50% bullets |
-| `ai-hint` | `ai-hint` (keep) | Top image band (30% height) |
-| `quote` | `quote` (keep) | Background image at 15% opacity |
-| `checklist` | `image-text` | Left 40% image, right 60% checklist |
-| `title` | `title` (keep) | Background image at 10% opacity |
-| `closing` | `closing` (keep) | Background image at 10% opacity |
+| Original Layout | New Layout       | Image Placement                     |
+| --------------- | ---------------- | ----------------------------------- |
+| `text-body`     | `image-text`     | Left 50% image, right 50% text      |
+| `bullet-list`   | `image-text`     | Left 50% image, right 50% bullets   |
+| `ai-hint`       | `ai-hint` (keep) | Top image band (30% height)         |
+| `quote`         | `quote` (keep)   | Background image at 15% opacity     |
+| `checklist`     | `image-text`     | Left 40% image, right 60% checklist |
+| `title`         | `title` (keep)   | Background image at 10% opacity     |
+| `closing`       | `closing` (keep) | Background image at 10% opacity     |
 
 Critical rule:
+
 ```
 IF switched to image-text:
   -> re-run distillation for reduced text width
@@ -290,14 +310,17 @@ IF switched to image-text:
 ```
 
 ## 4.5 Image Save & Reference Pipeline (Critical)
+
 This pipeline connects image files to HTML rendering and PDF embedding.
 
 ### Save Location
+
 ```
 {output_dir}/assets/
 ```
 
 Filename examples:
+
 ```
 assets/md-img-02-architecture.png
 assets/chart-05-throughput.png
@@ -305,24 +328,31 @@ assets/ai-img-07-reliability.png
 ```
 
 Create directory before copy/generation:
+
 ```bash
 mkdir -p "{output_dir}/assets"
 ```
 
 ### HTML Reference Rules
+
 Use absolute file paths in slide HTML:
 
 ```html
 <!-- CORRECT: absolute path -->
-<img src="/absolute/path/to/docs/prd_slides/assets/ai-img-07-reliability.png"
-     style="width: 460pt; height: 340pt; object-fit: cover;">
+<img
+  src="/absolute/path/to/docs/prd_slides/assets/ai-img-07-reliability.png"
+  style="width: 460pt; height: 340pt; object-fit: cover;"
+/>
 
 <!-- ALSO CORRECT: file:// URI -->
-<img src="file:///absolute/path/to/docs/prd_slides/assets/chart-05-throughput.png"
-     style="width: 460pt; height: 340pt; object-fit: cover;">
+<img
+  src="file:///absolute/path/to/docs/prd_slides/assets/chart-05-throughput.png"
+  style="width: 460pt; height: 340pt; object-fit: cover;"
+/>
 ```
 
 Internal flow:
+
 1. Playwright renders HTML and computes image geometry
 2. `el.src` resolves absolute local path
 3. Playwright renders the HTML slide with embedded `<img>` tags directly to PDF
@@ -330,24 +360,29 @@ Internal flow:
 PDF rendering also resolves local `<img src>` correctly when rendering local HTML files.
 
 ### Image Sizing for Layouts
-| Layout | Image Dimensions (pt) | CSS Style |
-|--------|----------------------|-----------|
-| `image-text` (left 50%) | 460 x 340 | `width: 460pt; height: 340pt; object-fit: cover` |
-| `title` (background 10%) | 720 x 405 | `width: 100%; height: 100%; opacity: 0.10` |
-| `closing` (background 10%) | 720 x 405 | `width: 100%; height: 100%; opacity: 0.10` |
-| `ai-hint` (top 30%) | 720 x 120 | `width: 100%; height: 120pt; object-fit: cover` |
-| `quote` (background 15%) | 720 x 405 | `width: 100%; height: 100%; opacity: 0.15` |
+
+| Layout                     | Image Dimensions (pt) | CSS Style                                        |
+| -------------------------- | --------------------- | ------------------------------------------------ |
+| `image-text` (left 50%)    | 460 x 340             | `width: 460pt; height: 340pt; object-fit: cover` |
+| `title` (background 10%)   | 720 x 405             | `width: 100%; height: 100%; opacity: 0.10`       |
+| `closing` (background 10%) | 720 x 405             | `width: 100%; height: 100%; opacity: 0.10`       |
+| `ai-hint` (top 30%)        | 720 x 120             | `width: 100%; height: 120pt; object-fit: cover`  |
+| `quote` (background 15%)   | 720 x 405             | `width: 100%; height: 100%; opacity: 0.15`       |
 
 ## 4.6 Generation Methods (3-Priority Image System)
+
 Priority is strict. Lower priority cannot replace higher availability.
 
 ### Priority 1: Original MD Images (Mandatory First)
+
 Source pattern:
+
 ```
 ![alt](relative/or/absolute/path)
 ```
 
 Rules:
+
 1. Always consume original MD image first
 2. Never replace with chart/AI image when source image exists
 3. Copy to `assets/md-img-{NN}-{slug}.png`
@@ -355,16 +390,19 @@ Rules:
 5. Bind copied file with absolute path in slide HTML
 
 ### Priority 2: HTML Code Generation (Charts, Diagrams, Compositions)
+
 Use when Priority 1 is unavailable and intent is structurally renderable.
 
 > Full 8-phase capture protocol → [chart-capture-pipeline.md](chart-capture-pipeline.md)
 
 Routes:
+
 - `render_chart_page()` for data-driven visuals (generates complete capture-ready HTML)
 - `wrap_capture_html()` for custom HTML diagrams/compositions
 - Playwright `.capture-root` element screenshot → `trim.py` auto-crop
 
 Chart capture example:
+
 ```python
 from templates.charts import render_chart_page
 
@@ -375,35 +413,37 @@ html = render_chart_page("bar_chart", [
 ```
 
 ```javascript
-const { chromium } = require('playwright');
-const fs = require('fs');
+const { chromium } = require("playwright");
+const fs = require("fs");
 
 async function captureChart(html, outputPath) {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-  await page.setContent(html, { waitUntil: 'networkidle' });
+  const page = await browser.newPage({
+    viewport: { width: 1920, height: 1080 },
+  });
+  await page.setContent(html, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
 
-  const el = await page.locator('.capture-root');
+  const el = await page.locator(".capture-root");
   let box = await el.boundingBox();
-  if (!box) throw new Error('.capture-root not found');
+  if (!box) throw new Error(".capture-root not found");
 
   await page.setViewportSize({
-    width:  Math.ceil(box.x + box.width  + 48),
+    width: Math.ceil(box.x + box.width + 48),
     height: Math.ceil(box.y + box.height + 48),
   });
   await page.waitForTimeout(100);
-  box = await el.boundingBox();  // re-measure after reflow
+  box = await el.boundingBox(); // re-measure after reflow
 
   // Element screenshot — NEVER use page.screenshot() or fullPage
-  await el.screenshot({ path: outputPath, type: 'png' });
+  await el.screenshot({ path: outputPath, type: "png" });
 
   // Dimension sanity check — catches wrong capture method
-  const sharp = require('sharp');
+  const sharp = require("sharp");
   const meta = await sharp(outputPath).metadata();
   if (meta.width > box.width * 1.5 || meta.height > box.height * 1.5) {
     fs.unlinkSync(outputPath);
-    throw new Error('PNG > 1.5× bbox — re-capture with element screenshot');
+    throw new Error("PNG > 1.5× bbox — re-capture with element screenshot");
   }
 
   const stat = fs.statSync(outputPath);
@@ -415,15 +455,17 @@ async function captureChart(html, outputPath) {
 ```
 
 Optional auto-crop (requires Pillow):
+
 ```python
 from templates.charts.trim import autocrop
 autocrop("chart-05-throughput.png", padding=4, threshold=250)
 ```
 
 HTML concept visual code (retained fallback for non-chart visuals):
+
 ```javascript
-const { chromium } = require('playwright');
-const path = require('path');
+const { chromium } = require("playwright");
+const path = require("path");
 
 async function generateConceptImage(insightText, label, outputDir, slideIndex) {
   const html = `<html><body style="margin:0;width:1920px;height:1080px;display:flex;align-items:center;justify-content:center;
@@ -431,28 +473,37 @@ async function generateConceptImage(insightText, label, outputDir, slideIndex) {
     <div style="max-width:980px;color:#fff;font-size:48px;font-weight:700;line-height:1.3;text-align:center;opacity:.9;">${insightText}</div>
   </body></html>`;
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-  await page.setContent(html, { waitUntil: 'networkidle' });
-  const out = path.join(outputDir, `ai-img-${String(slideIndex).padStart(2, '0')}-${label}.png`);
-  await page.screenshot({ path: out, type: 'png' });
+  const page = await browser.newPage({
+    viewport: { width: 1920, height: 1080 },
+  });
+  await page.setContent(html, { waitUntil: "networkidle" });
+  const out = path.join(
+    outputDir,
+    `ai-img-${String(slideIndex).padStart(2, "0")}-${label}.png`,
+  );
+  await page.screenshot({ path: out, type: "png" });
   await browser.close();
   return out;
 }
 ```
 
 Manifest rule for Priority 2:
+
 - `type=chart`
 - set `data_hash`
 - reuse on hash match
 
 ### Priority 3: LLM Image Generation (Insight-Based)
+
 Use when Priority 1 is unavailable and Priority 2 is not sufficient for narrative needs.
 
 Prompt source:
+
 - required: `insight`, `claim`
 - optional: `role`, `stakes`, `headline`, `evidence`
 
 Execution:
+
 1. Build prompt from Section 4.2
 2. Compute `content_hash`
 3. Check manifest hit/miss
@@ -462,28 +513,31 @@ Execution:
 If direct LLM generation is unavailable, fallback to HTML concept screenshot.
 
 ## 4.7 Environment-Specific Execution
-| Environment | Priority 1 | Priority 2 | Priority 3 |
-|-------------|-----------|-----------|-----------|
-| **Cursor 2.4+ / Antigravity** | Original MD image copy | HTML code generation + Playwright screenshot | Native image generation from insight prompt |
-| **OpenCode** | Original MD image copy | HTML code generation + Playwright screenshot | Background `task(run_in_background=true)` generation |
-| **Other / No native image gen** | Original MD image copy | HTML code generation + Playwright screenshot (**primary generated route**) | HTML concept visual or SVG placeholder fallback |
+
+| Environment                     | Priority 1             | Priority 2                                                                 | Priority 3                                           |
+| ------------------------------- | ---------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Cursor 2.4+ / Antigravity**   | Original MD image copy | HTML code generation + Playwright screenshot                               | Native image generation from insight prompt          |
+| **OpenCode**                    | Original MD image copy | HTML code generation + Playwright screenshot                               | Background `task(run_in_background=true)` generation |
+| **Other / No native image gen** | Original MD image copy | HTML code generation + Playwright screenshot (**primary generated route**) | HTML concept visual or SVG placeholder fallback      |
 
 Detection order: 1) MD image exists -> Priority 1, 2) chart/diagram/composition fit -> Priority 2, 3) else Priority 3, 4) if Priority 3 fails -> HTML concept fallback.
 
 ## 4.8 Image Quality Requirements
-| Item | Standard |
-|------|----------|
-| Resolution | 1920 x 1080 px |
-| Format | PNG (JPEG acceptable) |
-| File size | Under 5MB |
-| Style | Professional, clean, conceptual |
-| Colors | Harmonized with slide palette |
-| Prohibited | No text, logos, watermarks, busy backgrounds |
+
+| Item          | Standard                                      |
+| ------------- | --------------------------------------------- |
+| Resolution    | 1920 x 1080 px                                |
+| Format        | PNG (JPEG acceptable)                         |
+| File size     | Under 5MB                                     |
+| Style         | Professional, clean, conceptual               |
+| Colors        | Harmonized with slide palette                 |
+| Prohibited    | No text, logos, watermarks, busy backgrounds  |
 | Save location | `{output_dir}/assets/ai-img-{NN}-{label}.png` |
 
 Additional checks: clear focal subject, no low-contrast noise behind text zones, no decorative clutter.
 
 ## 4.9 Failure Handling
+
 ```
 FOR each slide requiring visual support:
   TRY Priority 1 (original MD image)
@@ -519,6 +573,7 @@ AFTER all slides:
 ```
 
 Diagnostic log format:
+
 ```
 [IMG-OK]    Slide 2: md-img-02-architecture.png (Priority 1: original-md)
 [IMG-OK]    Slide 5: chart-05-throughput.png (Priority 2: chart, cache hit)
@@ -528,6 +583,7 @@ Diagnostic log format:
 ```
 
 Failure policy:
+
 - any `visual-missing` slide blocks output
 - do not write `.pdf` if hard gates fail
 - report failing slide IDs and last attempted priority path

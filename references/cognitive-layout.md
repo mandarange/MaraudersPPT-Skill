@@ -12,28 +12,30 @@
 
 Research source: Nielsen Norman Group eye-tracking studies, Tobii eye-tracking data.
 
-| Pattern | Shape | Applies When | Slide Types |
-|---------|-------|-------------|-------------|
-| **Z-Pattern** | Top-left → Top-right → Bottom-left → Bottom-right | Low text density, mixed content | Default for most slides |
-| **F-Pattern** | Top → Left-edge scan → Spot reads right | High text density, bullet-heavy | `bullet-list`, `evidence-bullets`, `text-body` |
-| **Center-Focus** | Center dominant → radiate outward | Single dominant element | `hero-metric`, `single-statement`, `donut-chart` |
+| Pattern          | Shape                                             | Applies When                    | Slide Types                                      |
+| ---------------- | ------------------------------------------------- | ------------------------------- | ------------------------------------------------ |
+| **Z-Pattern**    | Top-left → Top-right → Bottom-left → Bottom-right | Low text density, mixed content | Default for most slides                          |
+| **F-Pattern**    | Top → Left-edge scan → Spot reads right           | High text density, bullet-heavy | `bullet-list`, `evidence-bullets`, `text-body`   |
+| **Center-Focus** | Center dominant → radiate outward                 | Single dominant element         | `hero-metric`, `single-statement`, `donut-chart` |
 
 ### 1.2 Actionable Layout Rules from Eye Patterns
 
 #### Z-Pattern Rules (Default)
+
 ```
 RULE Z-1: Place the most important element (action title) at TOP-LEFT
 RULE Z-2: Place supporting visual (chart, image) at TOP-RIGHT or CENTER-RIGHT
 RULE Z-3: Place call-to-action or key takeaway at BOTTOM-RIGHT
 RULE Z-4: Place secondary text/evidence at BOTTOM-LEFT
-RULE Z-5: The diagonal (top-left → bottom-right) is the power axis — 
+RULE Z-5: The diagonal (top-left → bottom-right) is the power axis —
            place accent/highlight elements along this diagonal
 ```
 
 #### F-Pattern Rules (Text-heavy slides)
+
 ```
 RULE F-1: First line (action title) gets FULL attention — make it count
-RULE F-2: First 2-3 words of each bullet get the most fixation — 
+RULE F-2: First 2-3 words of each bullet get the most fixation —
            front-load keywords, never start with "The", "This", "It"
 RULE F-3: Left margin alignment is critical — all bullets must start at same x-coordinate
 RULE F-4: Visual weight decreases going down — place strongest evidence in bullet #1
@@ -41,6 +43,7 @@ RULE F-5: After bullet #3, attention drops sharply — never exceed 4 bullets
 ```
 
 #### Center-Focus Rules
+
 ```
 RULE C-1: Dominant element (number, statement) must be dead-center ±5% of canvas
 RULE C-2: Support text goes directly below, never above
@@ -110,7 +113,7 @@ RULE CONT-2: Timeline dots must sit on a perfectly straight horizontal line
 RULE CONT-3: Process flow arrows must form a single horizontal or L-shaped path
 RULE CONT-4: In multi-column layouts, column top edges must align exactly
 RULE CONT-5: Grid lines in charts must be evenly spaced and perfectly parallel
-RULE CONT-6: If elements can be aligned, they MUST be aligned — 
+RULE CONT-6: If elements can be aligned, they MUST be aligned —
               misalignment by even 2px breaks continuity perception
 ```
 
@@ -150,15 +153,15 @@ Research source: Healey & Enns (2012), Colin Ware "Information Visualization" (2
 
 ### 3.1 Attribute Hierarchy for Slides
 
-| Attribute | Processing Speed | Best For | Slide Application |
-|-----------|:---:|---------|-------------------|
-| **Color hue** | ~50ms | Categorical distinction | Accent `#D94F4F` pops against `#1A1A1A` grayscale |
-| **Size** | ~80ms | Quantitative comparison | KPI hero number (120px) vs body text (18px) |
-| **Orientation** | ~100ms | Direction/trend | ▲/▼ arrows for delta indicators |
-| **Length** | ~100ms | Quantitative ranking | Bar chart bar widths |
-| **Position** | ~120ms | Spatial clustering | Element placement in Z-pattern |
-| **Shape** | ~150ms | Categorical coding | Circle vs square nodes in diagrams |
-| **Enclosure** | ~180ms | Grouping | Card borders, section backgrounds |
+| Attribute       | Processing Speed | Best For                | Slide Application                                 |
+| --------------- | :--------------: | ----------------------- | ------------------------------------------------- |
+| **Color hue**   |      ~50ms       | Categorical distinction | Accent `#D94F4F` pops against `#1A1A1A` grayscale |
+| **Size**        |      ~80ms       | Quantitative comparison | KPI hero number (120px) vs body text (18px)       |
+| **Orientation** |      ~100ms      | Direction/trend         | ▲/▼ arrows for delta indicators                   |
+| **Length**      |      ~100ms      | Quantitative ranking    | Bar chart bar widths                              |
+| **Position**    |      ~120ms      | Spatial clustering      | Element placement in Z-pattern                    |
+| **Shape**       |      ~150ms      | Categorical coding      | Circle vs square nodes in diagrams                |
+| **Enclosure**   |      ~180ms      | Grouping                | Card borders, section backgrounds                 |
 
 ### 3.2 Actionable Rules
 
@@ -172,7 +175,7 @@ RULE PA-3: The hero number in a KPI slide must be ≥3× the body text size
 RULE PA-4: Bar chart highlight: change fill color to accent on exactly 1 bar
 RULE PA-5: Don't encode data using ONLY color — add labels, patterns, or position
            (color-blind safety per Section 13.2)
-RULE PA-6: If everything is bold, nothing is bold — 
+RULE PA-6: If everything is bold, nothing is bold —
            max 2 bold elements per slide
 ```
 
@@ -180,7 +183,7 @@ RULE PA-6: If everything is bold, nothing is bold —
 
 ## 4) Working Memory Constraints (Miller's Law)
 
-Research source: Miller (1956) "The Magical Number Seven, Plus or Minus Two", 
+Research source: Miller (1956) "The Magical Number Seven, Plus or Minus Two",
 Cowan (2001) revised to 4±1 chunks, Sweller Cognitive Load Theory (1988).
 
 ### 4.1 Modern Understanding
@@ -211,18 +214,18 @@ RULE WM-8: Chunking increases capacity — group 8 items into 3 labeled groups
 
 ### 4.3 Extraneous vs Intrinsic vs Germane Load
 
-| Load Type | Definition | Slide Action |
-|-----------|-----------|--------------|
-| **Extraneous** | Caused by bad design, not content | ELIMINATE: decorations, chart junk, unclear labels |
-| **Intrinsic** | Caused by content complexity | MANAGE: simplify data, chunk information |
-| **Germane** | Effort spent building understanding | MAXIMIZE: clear hierarchy, good labels, logical flow |
+| Load Type      | Definition                          | Slide Action                                         |
+| -------------- | ----------------------------------- | ---------------------------------------------------- |
+| **Extraneous** | Caused by bad design, not content   | ELIMINATE: decorations, chart junk, unclear labels   |
+| **Intrinsic**  | Caused by content complexity        | MANAGE: simplify data, chunk information             |
+| **Germane**    | Effort spent building understanding | MAXIMIZE: clear hierarchy, good labels, logical flow |
 
 ```
-RULE CL-1: Every visual element must carry information — 
+RULE CL-1: Every visual element must carry information —
            if removing it loses nothing, remove it
 RULE CL-2: Redundant encoding (label + color + position all saying the same thing)
            is acceptable because it reduces intrinsic load
-RULE CL-3: Consistent layout across slides reduces extraneous load — 
+RULE CL-3: Consistent layout across slides reduces extraneous load —
            title position, margin, font size must be identical slide-to-slide
 ```
 
@@ -236,12 +239,12 @@ Research source: BCG slide design principles, McKinsey Pyramid Principle, Tufte 
 
 Every slide must have exactly 4 levels of visual weight:
 
-| Level | Element | Visual Treatment | Attention Share |
-|:-----:|---------|-----------------|:---------------:|
-| 1 | **Hero element** | Largest size, boldest weight, accent color possible | 40-50% |
-| 2 | **Action title** | 24pt Bold, full width, top position | 25-30% |
-| 3 | **Supporting evidence** | 18pt Regular, bullets or labels | 15-20% |
-| 4 | **Attribution/source** | 12pt Light, bottom margin, gray | 5% |
+| Level | Element                 | Visual Treatment                                    | Attention Share |
+| :---: | ----------------------- | --------------------------------------------------- | :-------------: |
+|   1   | **Hero element**        | Largest size, boldest weight, accent color possible |     40-50%      |
+|   2   | **Action title**        | 24pt Bold, full width, top position                 |     25-30%      |
+|   3   | **Supporting evidence** | 18pt Regular, bullets or labels                     |     15-20%      |
+|   4   | **Attribution/source**  | 12pt Light, bottom margin, gray                     |       5%        |
 
 ```
 RULE VH-1: Every slide must have a clear Level 1 (hero) element
@@ -274,7 +277,7 @@ RULE SQUINT-3: If two elements appear to be the same size at 25% zoom
 
 ## 6) Consulting Slide Standards (McKinsey/BCG Distilled)
 
-Research source: BCG slide writing methodology (Slideworks analysis), McKinsey Pyramid Principle, 
+Research source: BCG slide writing methodology (Slideworks analysis), McKinsey Pyramid Principle,
 analyst academy BCG slide breakdown, deckary.com MBB guide (2026).
 
 ### 6.1 The One-Message Rule
@@ -298,21 +301,21 @@ RULE WS-4: Between title and body: 32px (4× on 8px grid)
 RULE WS-5: Between bullet items: 16px (2× on 8px grid)
 RULE WS-6: Between major content blocks: 24px (3× on 8px grid)
 RULE WS-7: Charts/images should have 16px breathing room on all sides
-RULE WS-8: Never fill content area edge-to-edge — 
+RULE WS-8: Never fill content area edge-to-edge —
            leave ≥10% padding within the content zone
 ```
 
 ### 6.3 Chart Selection (Consulting Standard)
 
-| Data Type | Chart Type | Why |
-|-----------|-----------|-----|
-| Comparison across items | Horizontal bar | Easiest to read labels + compare lengths |
-| Proportion / share | Donut chart | Center value gives immediate context |
-| Trend over time | Sparkline or line chart | Direction visible at a glance |
-| Sequential process | Process flow | Step progression is natural left-to-right |
-| Before/after | Side-by-side comparison | Parallel structure enables rapid comparison |
-| KPI highlights | KPI cards | Numbers as hero elements |
-| Timeline | Timeline | Chronological left-to-right mapping |
+| Data Type               | Chart Type              | Why                                         |
+| ----------------------- | ----------------------- | ------------------------------------------- |
+| Comparison across items | Horizontal bar          | Easiest to read labels + compare lengths    |
+| Proportion / share      | Donut chart             | Center value gives immediate context        |
+| Trend over time         | Sparkline or line chart | Direction visible at a glance               |
+| Sequential process      | Process flow            | Step progression is natural left-to-right   |
+| Before/after            | Side-by-side comparison | Parallel structure enables rapid comparison |
+| KPI highlights          | KPI cards               | Numbers as hero elements                    |
+| Timeline                | Timeline                | Chronological left-to-right mapping         |
 
 ```
 RULE CHART-1: Never use 3D charts — they distort perception of values
@@ -395,7 +398,7 @@ RULE SPLIT-2: 60:40 split — use when one side has more content (text=60%)
 RULE SPLIT-3: 65:35 split — use for chart + KPI sidebar layout
 RULE SPLIT-4: Column gap must be 24-32px (3-4× on 8px grid)
 RULE SPLIT-5: Column tops must align exactly
-RULE SPLIT-6: Never split into 3+ columns on a slide — 
+RULE SPLIT-6: Never split into 3+ columns on a slide —
               cognitive load exceeds working memory
 ```
 
@@ -408,27 +411,27 @@ RULE SPLIT-6: Never split into 3+ columns on a slide —
 Research source: Tufte, "The Visual Display of Quantitative Information" (2001).
 
 ```
-RULE SNR-1: Data-ink ratio should approach 1.0 — 
+RULE SNR-1: Data-ink ratio should approach 1.0 —
             every pixel of ink should represent data
-RULE SNR-2: Remove chart junk: background patterns, 3D effects, 
+RULE SNR-2: Remove chart junk: background patterns, 3D effects,
             gradient fills, excessive gridlines
 RULE SNR-3: Use thin gridlines (#E0E0E0, 1px, dashed) not thick borders
 RULE SNR-4: Remove default chart legends when direct labeling is possible
-RULE SNR-5: Axis labels only where they add understanding — 
+RULE SNR-5: Axis labels only where they add understanding —
             if the data labels are sufficient, omit the axis
 ```
 
 ### 8.2 Content Density Targets
 
-| Slide Type | Target Density | Words | Visual Elements |
-|-----------|:---:|:---:|:---:|
-| Hero metric | Very low | 5-10 | 1 number + 1 label |
-| Single statement | Low | 10-20 | 1 sentence |
-| Bullet list | Medium | 25-35 | 3-4 bullets |
-| Data dashboard | Medium-high | 15-25 | KPI cards + 1 chart |
-| Evidence bullets | Medium | 25-40 | 3-4 bullets + accent |
-| Comparison | Medium | 30-40 | 2 columns × 3-4 items |
-| Process flow | Low-medium | 15-25 | 3-8 labeled steps |
+| Slide Type       | Target Density | Words |    Visual Elements    |
+| ---------------- | :------------: | :---: | :-------------------: |
+| Hero metric      |    Very low    | 5-10  |  1 number + 1 label   |
+| Single statement |      Low       | 10-20 |      1 sentence       |
+| Bullet list      |     Medium     | 25-35 |      3-4 bullets      |
+| Data dashboard   |  Medium-high   | 15-25 |  KPI cards + 1 chart  |
+| Evidence bullets |     Medium     | 25-40 | 3-4 bullets + accent  |
+| Comparison       |     Medium     | 30-40 | 2 columns × 3-4 items |
+| Process flow     |   Low-medium   | 15-25 |   3-8 labeled steps   |
 
 ### 8.3 The 3-Second Rule
 
@@ -436,7 +439,7 @@ RULE SNR-5: Axis labels only where they add understanding —
 
 ```
 RULE 3S-1: The action title delivers the message in <2 seconds of reading
-RULE 3S-2: The hero element (chart, number, image) confirms the message 
+RULE 3S-2: The hero element (chart, number, image) confirms the message
            in the next 1 second
 RULE 3S-3: If neither the title nor the hero communicates the message,
            the slide fails the 3-second test
@@ -455,7 +458,7 @@ Research source: BCG storylining methodology, Minto Pyramid Principle.
 ```
 RULE ARC-1: Deck follows: Context → Problem → Solution → Evidence → Impact → Action
 RULE ARC-2: Each section transition uses a section-divider slide (dark bg)
-RULE ARC-3: Visual density should oscillate: 
+RULE ARC-3: Visual density should oscillate:
             high-density → low-density → high-density
             (never 3+ consecutive same-density slides)
 RULE ARC-4: Maximum 2 consecutive slides with the same dominant element type
@@ -470,7 +473,7 @@ RULE ARC-5: The deck must start with impact (Executive Summary)
 variety_score = unique_compositions / total_slides
 
 RULE VAR-1: Variety score must be ≥0.6 (60% unique compositions)
-RULE VAR-2: Track dominant_element across slides: 
+RULE VAR-2: Track dominant_element across slides:
             number, image, text, chart — alternate them
 RULE VAR-3: Track composition type: hero-metric, split, evidence, comparison —
             no type should exceed 25% of total slides
@@ -479,11 +482,11 @@ RULE VAR-3: Track composition type: hero-metric, split, evidence, comparison —
 ### 9.3 Slide Count Guidelines
 
 | Presentation Duration | Slide Count | Seconds/Slide |
-|:---:|:---:|:---:|
-| 5 min | 8-12 | 25-38s |
-| 10 min | 15-20 | 30-40s |
-| 20 min | 25-35 | 34-48s |
-| 30 min | 35-45 | 40-51s |
+| :-------------------: | :---------: | :-----------: |
+|         5 min         |    8-12     |    25-38s     |
+|        10 min         |    15-20    |    30-40s     |
+|        20 min         |    25-35    |    34-48s     |
+|        30 min         |    35-45    |    40-51s     |
 
 ```
 RULE COUNT-1: Target 30-45 seconds per slide (average)
@@ -496,25 +499,25 @@ RULE COUNT-4: Section dividers get 5-10 seconds (transition only)
 
 ## 10) Summary: Top 20 Rules (Quick Reference)
 
-| # | Rule | Source |
-|---|------|--------|
-| 1 | One message per slide, stated as action title | BCG/McKinsey |
-| 2 | Maximum 4 bullets (optimal 3) | Cowan's 4±1 |
-| 3 | 3-second comprehension test | Eye-tracking |
-| 4 | Z-pattern default layout (title top-left, visual top-right) | Nielsen Norman |
-| 5 | Front-load keywords in bullets (F-pattern first-word fixation) | Eye-tracking |
-| 6 | Exactly 1 accent color instance per slide | Pre-attentive theory |
-| 7 | 4-level visual hierarchy (hero → title → support → source) | Gestalt + consulting |
-| 8 | Proximity ratio 1:2 (within-group : between-group spacing) | Gestalt proximity |
-| 9 | All elements snap to 8px grid | Consistency = reduced cognitive load |
-| 10 | Maximum 5 donut segments, 6 bars, 8 process steps | Working memory limits |
-| 11 | Minimum 20% white space per slide | BCG standard |
-| 12 | Squint test: hierarchy visible at 25% zoom | Consulting QA |
-| 13 | No 3D charts, no pie charts (donut only), no chart junk | Tufte |
-| 14 | Direct-label data points, minimize legends | Cognitive load reduction |
-| 15 | Title test: reading only titles tells the full story | McKinsey Pyramid |
-| 16 | Visual variety score ≥0.6 across deck | Deck rhythm |
-| 17 | Max 2 consecutive same-density slides | Oscillation principle |
-| 18 | Consistent positioning: title at same coordinates across all slides | Continuity principle |
-| 19 | Body text minimum 16pt, hero number minimum 56px | Readability + size pre-attention |
-| 20 | Source attribution on every data slide | Consulting credibility standard |
+| #   | Rule                                                                | Source                               |
+| --- | ------------------------------------------------------------------- | ------------------------------------ |
+| 1   | One message per slide, stated as action title                       | BCG/McKinsey                         |
+| 2   | Maximum 4 bullets (optimal 3)                                       | Cowan's 4±1                          |
+| 3   | 3-second comprehension test                                         | Eye-tracking                         |
+| 4   | Z-pattern default layout (title top-left, visual top-right)         | Nielsen Norman                       |
+| 5   | Front-load keywords in bullets (F-pattern first-word fixation)      | Eye-tracking                         |
+| 6   | Exactly 1 accent color instance per slide                           | Pre-attentive theory                 |
+| 7   | 4-level visual hierarchy (hero → title → support → source)          | Gestalt + consulting                 |
+| 8   | Proximity ratio 1:2 (within-group : between-group spacing)          | Gestalt proximity                    |
+| 9   | All elements snap to 8px grid                                       | Consistency = reduced cognitive load |
+| 10  | Maximum 5 donut segments, 6 bars, 8 process steps                   | Working memory limits                |
+| 11  | Minimum 20% white space per slide                                   | BCG standard                         |
+| 12  | Squint test: hierarchy visible at 25% zoom                          | Consulting QA                        |
+| 13  | No 3D charts, no pie charts (donut only), no chart junk             | Tufte                                |
+| 14  | Direct-label data points, minimize legends                          | Cognitive load reduction             |
+| 15  | Title test: reading only titles tells the full story                | McKinsey Pyramid                     |
+| 16  | Visual variety score ≥0.6 across deck                               | Deck rhythm                          |
+| 17  | Max 2 consecutive same-density slides                               | Oscillation principle                |
+| 18  | Consistent positioning: title at same coordinates across all slides | Continuity principle                 |
+| 19  | Body text minimum 16pt, hero number minimum 56px                    | Readability + size pre-attention     |
+| 20  | Source attribution on every data slide                              | Consulting credibility standard      |

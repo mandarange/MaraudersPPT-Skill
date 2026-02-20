@@ -8,15 +8,15 @@ Applies to **Priority 2** images (`type=chart`) in the 3-priority image system.
 
 ## Why This Pipeline Exists
 
-| Failure Mode | Cause | Solution |
-|---|---|---|
-| PNG not generated | External script dependency | Single browser tool, one-shot capture |
-| Unwanted whitespace | full-page screenshot + body padding | element screenshot + zero-padding CSS + auto-crop |
-| Edge clipping | viewport smaller than content | bounding box measurement → viewport auto-expand (48px gutter) |
-| Aspect ratio distortion | arbitrary clip dimensions | preserve measured bounding box ratio exactly |
-| PNG is viewport-sized | agent used page screenshot instead of element screenshot | dimension sanity check — PNG > 1.5× bbox → re-capture |
-| File missing on disk | async I/O race | filesystem proof gate — verify before path insertion |
-| Render HTML deleted mid-capture | temp file cleanup | keep HTML until capture verified |
+| Failure Mode                    | Cause                                                    | Solution                                                      |
+| ------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| PNG not generated               | External script dependency                               | Single browser tool, one-shot capture                         |
+| Unwanted whitespace             | full-page screenshot + body padding                      | element screenshot + zero-padding CSS + auto-crop             |
+| Edge clipping                   | viewport smaller than content                            | bounding box measurement → viewport auto-expand (48px gutter) |
+| Aspect ratio distortion         | arbitrary clip dimensions                                | preserve measured bounding box ratio exactly                  |
+| PNG is viewport-sized           | agent used page screenshot instead of element screenshot | dimension sanity check — PNG > 1.5× bbox → re-capture         |
+| File missing on disk            | async I/O race                                           | filesystem proof gate — verify before path insertion          |
+| Render HTML deleted mid-capture | temp file cleanup                                        | keep HTML until capture verified                              |
 
 ---
 
@@ -32,43 +32,46 @@ html = render_chart_page("bar_chart", [
 ```
 
 ```javascript
-const { chromium } = require('playwright');
-const fs = require('fs');
+const { chromium } = require("playwright");
+const fs = require("fs");
 
 async function captureChart(html, outputPath) {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  const page = await browser.newPage({
+    viewport: { width: 1920, height: 1080 },
+  });
 
   // Phase 2: navigate + render wait
-  await page.setContent(html, { waitUntil: 'networkidle' });
+  await page.setContent(html, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
 
   // Phase 3: measure bbox + resize viewport
-  const el = await page.locator('.capture-root');
+  const el = await page.locator(".capture-root");
   let box = await el.boundingBox();
-  if (!box) throw new Error('.capture-root not found');
+  if (!box) throw new Error(".capture-root not found");
   await page.setViewportSize({
-    width:  Math.ceil(box.x + box.width  + 48),
+    width: Math.ceil(box.x + box.width + 48),
     height: Math.ceil(box.y + box.height + 48),
   });
   await page.waitForTimeout(100);
-  box = await el.boundingBox();  // re-measure after reflow
+  box = await el.boundingBox(); // re-measure after reflow
 
   // Phase 4: element screenshot (NEVER full-page)
-  await el.screenshot({ path: outputPath, type: 'png' });
+  await el.screenshot({ path: outputPath, type: "png" });
 
   // Phase 5: dimension sanity check
-  const sharp = require('sharp');
+  const sharp = require("sharp");
   const meta = await sharp(outputPath).metadata();
   if (meta.width > box.width * 1.5 || meta.height > box.height * 1.5) {
     fs.unlinkSync(outputPath);
-    throw new Error('PNG dimensions exceed 1.5× bbox — wrong capture method');
+    throw new Error("PNG dimensions exceed 1.5× bbox — wrong capture method");
   }
 
   // Phase 6: filesystem proof gate
   const stat = fs.statSync(outputPath);
   if (stat.size === 0) throw new Error(`Empty file: ${outputPath}`);
-  if (stat.size < 1024) console.warn(`Warning: ${outputPath} < 1KB — possible blank`);
+  if (stat.size < 1024)
+    console.warn(`Warning: ${outputPath} < 1KB — possible blank`);
 
   await browser.close();
   return outputPath;
@@ -84,6 +87,7 @@ async function captureChart(html, outputPath) {
 Use `render_chart_page(chart_type, data)` from `templates/charts/`.
 
 Requirements:
+
 - Output is a **complete** HTML document (`<!DOCTYPE html>…`)
 - All CSS is inline (no external CDN links)
 - No JavaScript dependencies
@@ -93,16 +97,17 @@ Requirements:
 
 **Critical CSS rules** (NEVER omit or change — each prevents a specific capture failure):
 
-| CSS Rule | Reason |
-|---|---|
-| `* { margin: 0; padding: 0; }` | Remove browser default margins (body has 8px by default) |
-| `body { width: fit-content }` | Body shrinks to content instead of expanding to viewport |
-| `body { display: inline-block }` | REQUIRED for `fit-content` to actually shrink-wrap |
-| `body { overflow: hidden }` | Prevent scrollbars |
-| `.capture-root { display: inline-block }` | Capture target bbox matches content exactly |
-| `.capture-root { margin: 0; padding: 0 }` | No outer spacing leaking into element screenshot |
+| CSS Rule                                  | Reason                                                   |
+| ----------------------------------------- | -------------------------------------------------------- |
+| `* { margin: 0; padding: 0; }`            | Remove browser default margins (body has 8px by default) |
+| `body { width: fit-content }`             | Body shrinks to content instead of expanding to viewport |
+| `body { display: inline-block }`          | REQUIRED for `fit-content` to actually shrink-wrap       |
+| `body { overflow: hidden }`               | Prevent scrollbars                                       |
+| `.capture-root { display: inline-block }` | Capture target bbox matches content exactly              |
+| `.capture-root { margin: 0; padding: 0 }` | No outer spacing leaking into element screenshot         |
 
 **Forbidden on body or .capture-root:**
+
 - `width: 100%`, `display: block`, or fixed `width`/`height` in CSS (viewport expansion)
 - `body { padding: ... }` (leaks into layout even if not captured directly)
 - External CDN links (breaks offline)
@@ -123,8 +128,8 @@ html = wrap_capture_html(
 ### Phase 2: Browser Navigation + Render Wait
 
 ```javascript
-await page.setContent(html, { waitUntil: 'networkidle' });
-await page.waitForTimeout(400);  // minimum — CSS paint + font settle
+await page.setContent(html, { waitUntil: "networkidle" });
+await page.waitForTimeout(400); // minimum — CSS paint + font settle
 ```
 
 - `waitUntil: 'networkidle'` — ensures all resources loaded
@@ -136,13 +141,13 @@ await page.waitForTimeout(400);  // minimum — CSS paint + font settle
 ### Phase 3: Bounding Box Measurement + Viewport Adjustment
 
 ```javascript
-const el = await page.locator('.capture-root');
+const el = await page.locator(".capture-root");
 let box = await el.boundingBox();
-if (!box) throw new Error('.capture-root not found or invisible');
+if (!box) throw new Error(".capture-root not found or invisible");
 
 // Expand viewport to fully contain element + 48px safety gutter (24px × 2 sides)
 await page.setViewportSize({
-  width:  Math.ceil(box.x + box.width  + 48),
+  width: Math.ceil(box.x + box.width + 48),
   height: Math.ceil(box.y + box.height + 48),
 });
 await page.waitForTimeout(100);
@@ -158,25 +163,27 @@ box = await el.boundingBox();
 ### Phase 4: Element Screenshot
 
 ```javascript
-await el.screenshot({ path: outputPath, type: 'png' });
+await el.screenshot({ path: outputPath, type: "png" });
 ```
 
-| Method | Allowed |
-|--------|---------|
-| `el.screenshot()` | **YES** — captures exactly the element |
-| `page.screenshot()` | **NO** — captures entire viewport (whitespace) |
-| `page.screenshot({ fullPage: true })` | **PROHIBITED** — unpredictable dimensions |
+| Method                                | Allowed                                        |
+| ------------------------------------- | ---------------------------------------------- |
+| `el.screenshot()`                     | **YES** — captures exactly the element         |
+| `page.screenshot()`                   | **NO** — captures entire viewport (whitespace) |
+| `page.screenshot({ fullPage: true })` | **PROHIBITED** — unpredictable dimensions      |
 
 ### Phase 5: Dimension Sanity Check
 
 ```javascript
-const sharp = require('sharp');
+const sharp = require("sharp");
 const meta = await sharp(outputPath).metadata();
 
 if (meta.width > box.width * 1.5 || meta.height > box.height * 1.5) {
   fs.unlinkSync(outputPath);
   // Re-capture with correct element selector
-  throw new Error('PNG dimensions > 1.5× bbox — likely viewport capture instead of element');
+  throw new Error(
+    "PNG dimensions > 1.5× bbox — likely viewport capture instead of element",
+  );
 }
 ```
 
@@ -189,15 +196,18 @@ If sanity check fails → delete PNG, re-attempt from Phase 4 with verified `.ca
 ```javascript
 const stat = fs.statSync(outputPath);
 if (stat.size === 0) throw new Error(`Empty: ${outputPath}`);
-if (stat.size < 1024) console.warn(`Warning: ${outputPath} < 1KB — possible blank`);
+if (stat.size < 1024)
+  console.warn(`Warning: ${outputPath} < 1KB — possible blank`);
 ```
 
 After `screenshot()` returns, **always** verify:
+
 1. File exists at `outputPath`
 2. File size > 0 bytes
 3. Size < 1 KB → log warning (possible blank render)
 
 On failure:
+
 1. Wait 800ms
 2. Retry from Phase 2
 3. Second failure → treat as HTML/CSS problem, fix and retry
@@ -211,10 +221,10 @@ from templates.charts.trim import autocrop
 autocrop("chart-05-throughput.png", padding=4, threshold=250)
 ```
 
-| Parameter | Default | Description |
-|---|---|---|
-| `padding` | 4 | Minimum whitespace to preserve around content (px) |
-| `threshold` | 250 | Channel value >= this → background pixel |
+| Parameter   | Default | Description                                        |
+| ----------- | ------- | -------------------------------------------------- |
+| `padding`   | 4       | Minimum whitespace to preserve around content (px) |
+| `threshold` | 250     | Channel value >= this → background pixel           |
 
 - **Threshold-based detection**: tolerates anti-aliasing artifacts near edges (exact-match would miss `(254,254,255)` pixels)
 - **RGBA support**: fully transparent pixels (alpha == 0) are treated as background
@@ -261,16 +271,16 @@ Integration with visual QA system: see [visual-qa.md](visual-qa.md).
 
 ## Failure Handling
 
-| Failure | Recovery |
-|---------|----------|
-| `.capture-root` not found | Re-check HTML generation — missing `render_chart_page()` or `wrap_capture_html()` |
-| `boundingBox()` returns null | Element not visible — check CSS `display`, `visibility`, `opacity` |
-| PNG dimensions > 1.5× bbox | Wrong capture method — delete PNG, re-capture with element screenshot |
-| Screenshot file 0 bytes | Browser crash or timeout — wait 800ms, retry from Phase 2 with fresh page |
-| Screenshot file < 1 KB | Possible blank render — check data input and CSS |
-| Crop produces tiny image (< 100px) | All-background render — check data input |
-| `Pillow` not installed | Skip Phase 7 (auto-crop is optional) |
-| Second retry fails | Fall through to next priority level (Priority 2 → Priority 3) |
+| Failure                            | Recovery                                                                          |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| `.capture-root` not found          | Re-check HTML generation — missing `render_chart_page()` or `wrap_capture_html()` |
+| `boundingBox()` returns null       | Element not visible — check CSS `display`, `visibility`, `opacity`                |
+| PNG dimensions > 1.5× bbox         | Wrong capture method — delete PNG, re-capture with element screenshot             |
+| Screenshot file 0 bytes            | Browser crash or timeout — wait 800ms, retry from Phase 2 with fresh page         |
+| Screenshot file < 1 KB             | Possible blank render — check data input and CSS                                  |
+| Crop produces tiny image (< 100px) | All-background render — check data input                                          |
+| `Pillow` not installed             | Skip Phase 7 (auto-crop is optional)                                              |
+| Second retry fails                 | Fall through to next priority level (Priority 2 → Priority 3)                     |
 
 ---
 
@@ -280,7 +290,9 @@ For multi-chart decks, reuse a single browser instance:
 
 ```javascript
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
+const context = await browser.newContext({
+  viewport: { width: 1920, height: 1080 },
+});
 
 for (const chart of charts) {
   const page = await context.newPage();

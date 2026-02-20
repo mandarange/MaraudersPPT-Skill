@@ -1,7 +1,8 @@
 ---
 name: MaraudersPPT-Skill
 description: >
-  Converts Markdown documents into presentation-quality PDF files.
+  Converts Markdown documents into presentation-quality PDF files. Optimized for Gemini 3.1 Pro.
+  Supported across Cursor, Claude Code, OpenCode, and Antigravity.
   Requires explicit "MaraudersMD2PPT" invocation - never self-activates.
   Phase-based pipeline with Semantic Analysis, Narrative Architecture, and Visual Blueprint.
   Maps heading hierarchies, tables, code blocks, images, and AI Hint blocks to 23 slide
@@ -14,7 +15,7 @@ compatibility:
   os: [macos, linux, windows]
   requires: [node, python3]
 metadata:
-  version: "2.1.1"
+  version: "2.1.3"
   author: "MaraudersPPT"
 ---
 
@@ -22,20 +23,20 @@ metadata:
 
 Converts Markdown -> presentation-quality PDF. For detailed design specs see `docs/design-spec.md`.
 
-| Reference | Contents |
-|-----------|----------|
-| [Insight Extraction](references/insight-extraction.md) | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm |
-| [Content Distillation](references/content-distillation.md) | Slide text limits, bullet rules, distillation algorithm |
-| [Cognitive Layout](references/cognitive-layout.md) | Eye-scanning patterns, Gestalt principles, pre-attentive attributes, spacing system |
-| [SVG Components](references/svg-components.md) | Inline SVG library: charts, icons, connectors, progress arcs, sparklines |
-| [Image Generation](references/image-generation.md) | 3-priority image system, Image Manifest cache, prompt derivation, layout adaptation |
-| [Layout Integrity](references/layout-integrity.md) | Safe areas, font metrics, verification checklist, golden rule |
-| [Parallel Execution](references/parallel-execution.md) | 6-wave architecture, parallel render strategy, performance gains |
-| [Visual QA](references/visual-qa.md) | Post-generation visual inspection workflow |
-| [Chart Capture Pipeline](references/chart-capture-pipeline.md) | HTML→Browser→PNG 8-phase capture protocol for chart screenshots |
-| [Design System](references/design-system.md) | Token/theme/variant architecture, editorial details, lint rules |
-| [Design Spec](docs/design-spec.md) | Colors, typography, 8px grid, infographic CSS |
-| [PRD](docs/prd-md-to-pptx-skill.md) | Product requirements, acceptance criteria |
+| Reference                                                      | Contents                                                                            |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [Insight Extraction](references/insight-extraction.md)         | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm    |
+| [Content Distillation](references/content-distillation.md)     | Slide text limits, bullet rules, distillation algorithm                             |
+| [Cognitive Layout](references/cognitive-layout.md)             | Eye-scanning patterns, Gestalt principles, pre-attentive attributes, spacing system |
+| [SVG Components](references/svg-components.md)                 | Inline SVG library: charts, icons, connectors, progress arcs, sparklines            |
+| [Image Generation](references/image-generation.md)             | 3-priority image system, Image Manifest cache, prompt derivation, layout adaptation |
+| [Layout Integrity](references/layout-integrity.md)             | Safe areas, font metrics, verification checklist, golden rule                       |
+| [Parallel Execution](references/parallel-execution.md)         | 6-wave architecture, parallel render strategy, performance gains                    |
+| [Visual QA](references/visual-qa.md)                           | Post-generation visual inspection workflow                                          |
+| [Chart Capture Pipeline](references/chart-capture-pipeline.md) | HTML→Browser→PNG 8-phase capture protocol for chart screenshots                     |
+| [Design System](references/design-system.md)                   | Token/theme/variant architecture, editorial details, lint rules                     |
+| [Design Spec](docs/design-spec.md)                             | Colors, typography, 8px grid, infographic CSS                                       |
+| [PRD](docs/prd-md-to-pptx-skill.md)                            | Product requirements, acceptance criteria                                           |
 
 ---
 
@@ -65,10 +66,10 @@ Without this keyword, the skill pipeline will not execute.
 
 **After failure: STOP. No generic conversion. No alternatives. Wait for re-invocation.**
 
-| Valid | Invalid |
-|-------|---------|
-| `MaraudersMD2PPT docs/prd.md` ✅ | `Convert this markdown to PPT` ❌ |
-| `MaraudersMD2PPT run` ✅ | `Make this into a presentation` ❌ |
+| Valid                                                      | Invalid                               |
+| ---------------------------------------------------------- | ------------------------------------- |
+| `MaraudersMD2PPT docs/prd.md` ✅                           | `Convert this markdown to PPT` ❌     |
+| `MaraudersMD2PPT run` ✅                                   | `Make this into a presentation` ❌    |
 | `Phase 1: update, Phase 2: MaraudersMD2PPT docs/prd.md` ✅ | `Use the slide skill on this file` ❌ |
 
 ---
@@ -80,6 +81,7 @@ Without this keyword, the skill pipeline will not execute.
 **PROHIBITED during pipeline:** "Should I continue?", "Do you want me to proceed?", "Ready to generate?", or any confirmation request. Zero confirmations in ALL environments.
 
 **State tracking throughout pipeline:**
+
 ```
 activation_status:  "ACTIVATED" | "FAILED"
 pipeline_mode:      "SKILL" (must NEVER be "GENERIC" after activation)
@@ -107,14 +109,14 @@ InputContract:
   cut_policy: enum [ruthless, balanced, preserve-all]  # default: balanced
 ```
 
-#### Phase 0.2 Environment Detection
+#### Phase 0.2 Environment Detection (Gemini 3.1 Pro Optimized)
 
-| | OpenCode | Cursor / Antigravity |
-|--|----------|----------------------|
-| `task()` available? | ✅ | ❌ |
-| Native image gen? | ❌ | ✅ (built-in agent tool) |
-| Image generation | Background task via `task()` | Native image gen (Nano Banana Pro) |
-| Model switch? | No | **No** |
+| | OpenCode | Cursor / Antigravity | Claude Code |
+|--|----------|----------------------|-------------|
+| `task()` available? | ✅ | ❌ | ❌ |
+| Native image gen? | ❌ | ✅ (built-in agent tool) | ❌ |
+| Image generation | Background task via `task()` | Native image gen | Standard generation |
+| Model switch? | No | **No** | No |
 
 All environments proceed immediately - no confirmation prompts.
 
@@ -132,7 +134,7 @@ All environments proceed immediately - no confirmation prompts.
 - H3 mapping: If H2 section has 2+ H3 children with substantial content -> split into separate slides per H3. If H3 content is light -> use as **bold sub-header** within parent slide's body area.
 - Classify: bullets, tables, code blocks, images, AI Hint blocks, blockquotes, checklists, **plain paragraphs**
 - **PARAGRAPH PRESERVATION (CRITICAL)**: Plain text paragraphs (no bullets, no special markup) MUST be converted to keyword bullets - NEVER silently deleted. Every paragraph produces >=1 bullet.
-- **MARKDOWN SANITIZATION (MANDATORY)**: Run sanitization in **Phase 1** (before Section Card generation). Remove markdown syntax tokens from display text: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (``` / `), and raw link syntax (`[text](url)` -> display text). Token leakage in rendered slide text is a CRITICAL BUG.
+- **MARKDOWN SANITIZATION (MANDATORY)**: Run sanitization in **Phase 1** (before Section Card generation). Remove markdown syntax tokens from display text: heading markers (`#`, `##`, `###`), list markers (`-`, `*`, `+`, `1.`), code fences/backticks (```/`), and raw link syntax (`[text](url)` -> display text). Token leakage in rendered slide text is a CRITICAL BUG.
 - **PARAGRAPH DETECTION RULE**: Plain paragraph = text block without markdown list markers (`-`, `*`, `+`, `1.`), blockquote marker (`>`), or code fence (```).
 - **URL/LINK HANDLING**: URLs in source MD -> preserve as display text (shortened if >80 chars). Never discard links silently. Group multiple URLs into a dedicated links slide or footer area.
 
@@ -142,18 +144,18 @@ All environments proceed immediately - no confirmation prompts.
 
 ```yaml
 SectionCard (per H2 section):
-  source_section: string          # "## Background"
-  claim: string                   # one-sentence argument this section makes
+  source_section: string # "## Background"
+  claim: string # one-sentence argument this section makes
   role: enum [problem, solution, evidence, context, meta]
   stakes: enum [high, medium, low]
-  must_keep: boolean              # can the story work without this section?
-  insight: string                 # the audience's "aha" moment
-  headline: string                # action title candidate (<=15 words, with verb + conclusion)
-  evidence: string[]              # supporting data points
-  accent_candidate: string        # for Bold + #D94F4F (1 per slide max)
-  kpi_metrics: string[]           # executive summary candidates
-  source_lines: [number, number]  # line range in source MD
-  confidence: float               # 0.0-1.0, re-analyze if < 0.5
+  must_keep: boolean # can the story work without this section?
+  insight: string # the audience's "aha" moment
+  headline: string # action title candidate (<=15 words, with verb + conclusion)
+  evidence: string[] # supporting data points
+  accent_candidate: string # for Bold + #D94F4F (1 per slide max)
+  kpi_metrics: string[] # executive summary candidates
+  source_lines: [number, number] # line range in source MD
+  confidence: float # 0.0-1.0, re-analyze if < 0.5
 ```
 
 Full extraction rules: [references/insight-extraction.md](references/insight-extraction.md)
@@ -162,16 +164,16 @@ Full extraction rules: [references/insight-extraction.md](references/insight-ext
 
 Auto-detect infographic candidates from text content:
 
-| Pattern | Visualization |
-|---------|--------------|
-| 3+ items with numbers | Bar Chart |
-| Percentages ~= 100% | Donut Chart |
-| 3-8 sequential steps | Process Flow |
-| Before/after comparison | Comparison |
-| 1-4 key metrics | KPI Cards |
-| 4-8 short items | Icon Grid |
-| Chronological events | Timeline |
-| Decreasing stages | Funnel |
+| Pattern                 | Visualization |
+| ----------------------- | ------------- |
+| 3+ items with numbers   | Bar Chart     |
+| Percentages ~= 100%     | Donut Chart   |
+| 3-8 sequential steps    | Process Flow  |
+| Before/after comparison | Comparison    |
+| 1-4 key metrics         | KPI Cards     |
+| 4-8 short items         | Icon Grid     |
+| Chronological events    | Timeline      |
+| Decreasing stages       | Funnel        |
 
 **Mode: AGGRESSIVE** - convert all mappable content. Use `templates/charts/` Python templates.
 Screenshot pipeline: `render_chart_page()` → Playwright `.capture-root` element screenshot → auto-crop. Full protocol → [references/chart-capture-pipeline.md](references/chart-capture-pipeline.md)
@@ -180,12 +182,12 @@ Screenshot pipeline: `render_chart_page()` → Playwright `.capture-root` elemen
 
 ```yaml
 DesignSystemConfig:
-  theme: string          # "consulting_minimal" | "modern_editorial" | "product_pitch" | "dark_executive" | "academic_clean"
-  variant_state: object  # VariantState — tracks layout rhythm across slides
+  theme: string # "consulting_minimal" | "modern_editorial" | "product_pitch" | "dark_executive" | "academic_clean"
+  variant_state: object # VariantState — tracks layout rhythm across slides
   editorial:
-    running_header: bool  # default: true
-    folio: bool           # default: true
-    confidential: bool    # default: false
+    running_header: bool # default: true
+    folio: bool # default: true
+    confidential: bool # default: false
 ```
 
 1. **Theme selection**: Infer from InputContract audience + tone. Default: `consulting_minimal`
@@ -214,15 +216,15 @@ Story arc must be explicit before slide ordering begins.
 
 Each slide must have exactly one narrative role.
 
-| Role | Purpose | Emotional Curve |
-|------|---------|----------------|
-| `hook` | Capture attention in first 15 seconds | Curiosity ↑ |
-| `problem` | Current situation pain points | Anxiety ↑ |
-| `insight` | "Why now" turning point | Realization |
-| `solution` | Core proposal | Hope ↑ |
-| `proof` | Data/case evidence | Trust ↑ |
-| `impact` | Results and vision | Confidence ↑ |
-| `cta` | Next action request | Resolution |
+| Role       | Purpose                               | Emotional Curve |
+| ---------- | ------------------------------------- | --------------- |
+| `hook`     | Capture attention in first 15 seconds | Curiosity ↑     |
+| `problem`  | Current situation pain points         | Anxiety ↑       |
+| `insight`  | "Why now" turning point               | Realization     |
+| `solution` | Core proposal                         | Hope ↑          |
+| `proof`    | Data/case evidence                    | Trust ↑         |
+| `impact`   | Results and vision                    | Confidence ↑    |
+| `cta`      | Next action request                   | Resolution      |
 
 #### Phase 2.3 Slide Plan
 
@@ -240,7 +242,7 @@ slide_plan:
   cut_list:
     - source: "## Dependencies"
       reason: "Technical detail, not story-relevant"
-      destination: "appendix"    # appendix | speaker_notes | cut
+      destination: "appendix" # appendix | speaker_notes | cut
   coverage_report:
     total_source_sections: 8
     in_deck: 5
@@ -256,11 +258,11 @@ slide_plan:
 
 **Hard limits:**
 
-| Layout | Max Bullets | Words/Bullet | Total Slide Words |
-|--------|:-----------:|:------------:|:-----------------:|
-| `bullet-list` | 3 (max 4) | **7** | **50 EN / 35 KR** |
-| `image-text` | 3 | **5** | **50 EN / 35 KR** |
-| All others | - | - | **50 EN / 35 KR** |
+| Layout        | Max Bullets | Words/Bullet | Total Slide Words |
+| ------------- | :---------: | :----------: | :---------------: |
+| `bullet-list` |  3 (max 4)  |    **7**     | **50 EN / 35 KR** |
+| `image-text`  |      3      |    **5**     | **50 EN / 35 KR** |
+| All others    |      -      |      -       | **50 EN / 35 KR** |
 
 **Korean/CJK: 0.7x multiplier.** Bullet = keyword fragment, NOT sentence.
 
@@ -276,6 +278,7 @@ HIERARCHY (in order):
 ```
 
 **Paragraph -> Bullet Conversion** (for non-bullet source text):
+
 ```
 Source paragraph: "This project is licensed under the MIT License."
   -> Bullet: • License: **MIT**
@@ -323,29 +326,30 @@ Each planned slide gets one visual blueprint before rendering.
 ```yaml
 VisualBlueprint:
   slide_id: number
-  role: string          # from Phase 2
-  message: string       # from Phase 2
+  role: string # from Phase 2
+  message: string # from Phase 2
   eye_flow:
-    first: string       # what the eye sees first (hero_number, image, headline)
+    first: string # what the eye sees first (hero_number, image, headline)
     second: string
     third: string
   composition:
-    type: string        # hero-metric, single-statement, split-image-text, evidence-bullets, etc.
-    dominant_element: string  # number, image, text, chart
+    type: string # hero-metric, single-statement, split-image-text, evidence-bullets, etc.
+    dominant_element: string # number, image, text, chart
   image_strategy:
     need: enum [original-md, chart, ai-generated, none]
     treatment: enum [background-10%, background-15%, left-50%, full-bleed, top-30%, none]
-    prompt_seed: string       # insight-based, not keyword-based
-    cache_lookup: object      # Image Manifest cache check
+    prompt_seed: string # insight-based, not keyword-based
+    cache_lookup: object # Image Manifest cache check
   emphasis:
     accent_word: string
     bold_elements: string[]
-  template: string            # composition template name
+  template: string # composition template name
 ```
 
 #### Variant Selection (Layout Rhythm)
 
 For each slide's layout_type, call `select_variant(layout_type, variant_state, content_hint)`. The algorithm penalizes:
+
 - Same variant_key as previous slide (-4.0)
 - 3+ consecutive same dominant_element (-5.0)
 - 3+ consecutive same content_density (-3.5)
@@ -366,17 +370,17 @@ Deck rhythm is validated before entering rendering.
 
 #### Phase 3.3 Visual Intent -> Layout Recipe Mapping
 
-| Visual Intent | Description | Layout Recipes |
-|--------------|-------------|----------------|
-| `dramatic-stat` | One shocking number | `hero-metric` / `kpi-cards` |
-| `contrast-comparison` | Before/after contrast | `comparison` / `bar-chart` |
-| `single-statement` | One powerful sentence | `quote-style` (28pt center) |
-| `evidence-grid` | Multiple evidence items | `kpi-cards` / `bullet-list` + image |
-| `process-reveal` | Step-by-step | `process-flow` / `timeline` |
-| `data-proof` | Data-driven proof | `bar-chart` / `donut-chart` / `table` |
-| `narrative-image` | Image tells the story | `image` / `image-text` |
-| `decision-point` | AI decision/rule highlight | `ai-hint` / `single-statement` |
-| `action-items` | Next steps | `closing` / `checklist` |
+| Visual Intent         | Description                | Layout Recipes                        |
+| --------------------- | -------------------------- | ------------------------------------- |
+| `dramatic-stat`       | One shocking number        | `hero-metric` / `kpi-cards`           |
+| `contrast-comparison` | Before/after contrast      | `comparison` / `bar-chart`            |
+| `single-statement`    | One powerful sentence      | `quote-style` (28pt center)           |
+| `evidence-grid`       | Multiple evidence items    | `kpi-cards` / `bullet-list` + image   |
+| `process-reveal`      | Step-by-step               | `process-flow` / `timeline`           |
+| `data-proof`          | Data-driven proof          | `bar-chart` / `donut-chart` / `table` |
+| `narrative-image`     | Image tells the story      | `image` / `image-text`                |
+| `decision-point`      | AI decision/rule highlight | `ai-hint` / `single-statement`        |
+| `action-items`        | Next steps                 | `closing` / `checklist`               |
 
 ### Phase 4: Rendering (HTML + Image + PDF)
 
@@ -393,15 +397,15 @@ Priority 3: LLM image generation -> insight-based prompt -> Native gen (Cursor) 
 
 Stored inside `assets/` — single source of truth for every image file.
 
-| Field | Purpose |
-|-------|---------|
-| `type` | `ai-generated` / `chart` / `original-md` / `html-concept` |
-| `prompt` | Exact prompt used (AI images only) — enables reproducibility |
-| `generator` | Which tool produced the image (`cursor-native`, `opencode-task`, `playwright-chart`, `source-copy`, …) |
-| `visual_intent` | Visual intent from Phase 3 VisualBlueprint |
-| `width` / `height` / `file_size_bytes` | Quality verification fields |
-| `content_hash` | Cache key for AI images: `sha256(prompt + generator_id + render_params)` |
-| `data_hash` | Cache key for charts: `sha256(data + chart_type + template_version)` |
+| Field                                  | Purpose                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `type`                                 | `ai-generated` / `chart` / `original-md` / `html-concept`                                              |
+| `prompt`                               | Exact prompt used (AI images only) — enables reproducibility                                           |
+| `generator`                            | Which tool produced the image (`cursor-native`, `opencode-task`, `playwright-chart`, `source-copy`, …) |
+| `visual_intent`                        | Visual intent from Phase 3 VisualBlueprint                                                             |
+| `width` / `height` / `file_size_bytes` | Quality verification fields                                                                            |
+| `content_hash`                         | Cache key for AI images: `sha256(prompt + generator_id + render_params)`                               |
+| `data_hash`                            | Cache key for charts: `sha256(data + chart_type + template_version)`                                   |
 
 - Skip regeneration on cache hit (`hash matches AND file exists AND file_size_bytes > 0`)
 - Full schema + cache logic -> [references/image-generation.md](references/image-generation.md)
@@ -424,36 +428,51 @@ Stored inside `assets/` — single source of truth for every image file.
 **Method: Combined HTML → Single PDF**
 
 1. **Assemble a single HTML document** containing ALL slides in order:
+
    ```html
    <!DOCTYPE html>
    <html>
-   <head>
-     <style>
-       @page { size: 1920px 1080px; margin: 0; }
-       .slide-page { width: 1920px; height: 1080px; position: relative; overflow: hidden; page-break-after: always; }
-       .slide-page:last-child { page-break-after: auto; }
-     </style>
-   </head>
-   <body>
-     <!-- Slide 1 HTML content wrapped in .slide-page -->
-     <div class="slide-page">...</div>
-     <!-- Slide 2 HTML content wrapped in .slide-page -->
-     <div class="slide-page">...</div>
-     <!-- ... all remaining slides ... -->
-   </body>
+     <head>
+       <style>
+         @page {
+           size: 1920px 1080px;
+           margin: 0;
+         }
+         .slide-page {
+           width: 1920px;
+           height: 1080px;
+           position: relative;
+           overflow: hidden;
+           page-break-after: always;
+         }
+         .slide-page:last-child {
+           page-break-after: auto;
+         }
+       </style>
+     </head>
+     <body>
+       <!-- Slide 1 HTML content wrapped in .slide-page -->
+       <div class="slide-page">...</div>
+       <!-- Slide 2 HTML content wrapped in .slide-page -->
+       <div class="slide-page">...</div>
+       <!-- ... all remaining slides ... -->
+     </body>
    </html>
    ```
 
 2. **Render to PDF with Playwright** (one call, one file):
+
    ```javascript
-   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-   await page.setContent(combinedHtml, { waitUntil: 'networkidle' });
+   const page = await browser.newPage({
+     viewport: { width: 1920, height: 1080 },
+   });
+   await page.setContent(combinedHtml, { waitUntil: "networkidle" });
    await page.pdf({
      path: outputPdfPath,
-     width: '1920px',
-     height: '1080px',
+     width: "1920px",
+     height: "1080px",
      printBackground: true,
-     preferCSSPageSize: true
+     preferCSSPageSize: true,
    });
    ```
 
@@ -540,6 +559,7 @@ After generation, visually inspect slide thumbnails for rendering issues automat
 #### Theme Injection and Design Lint
 
 After all slide HTML is generated:
+
 1. **Inject theme CSS**: Prepend `resolver.to_inline_style_block()` to each slide `<style>` block
 2. **Inject editorial elements**: `inject_editorial_elements(html, slide_index, total, deck_title)` per slide
 3. **Design lint**: `lint_deck(all_slide_htmls, variant_history)` — fix `error` severity issues
@@ -554,26 +574,26 @@ After all slide HTML is generated:
 
 ### Color Palette
 
-| Role | HEX | Usage |
-|------|-----|-------|
-| Background | `#FFFFFF` | Slide background |
-| Text | `#1A1A1A` | All default text |
-| Accent | `#D94F4F` | Word-level Bold only, 1 per slide |
-| Subtext | `#555555` | Secondary text |
-| Caption | `#888888` | Footnotes |
-| Section BG | `#2C2C2C` | section-divider only |
-| Code BG | `#1E1E1E` | Code area interior |
+| Role       | HEX       | Usage                             |
+| ---------- | --------- | --------------------------------- |
+| Background | `#FFFFFF` | Slide background                  |
+| Text       | `#1A1A1A` | All default text                  |
+| Accent     | `#D94F4F` | Word-level Bold only, 1 per slide |
+| Subtext    | `#555555` | Secondary text                    |
+| Caption    | `#888888` | Footnotes                         |
+| Section BG | `#2C2C2C` | section-divider only              |
+| Code BG    | `#1E1E1E` | Code area interior                |
 
 ### Typography
 
-| Element | Font | Weight | Size |
-|---------|------|--------|------|
-| Main Title | Pretendard | 800 | 36pt |
-| Slide Title | Pretendard | 700 | 24pt |
-| Body | Pretendard | 400 | 18pt (min 16pt) |
-| Caption | Pretendard | 300 | 12pt |
-| Code | JetBrains Mono | 400 | 13pt |
-| Chart content | Pretendard | 400–700 | **min 16px** |
+| Element       | Font           | Weight  | Size            |
+| ------------- | -------------- | ------- | --------------- |
+| Main Title    | Pretendard     | 800     | 36pt            |
+| Slide Title   | Pretendard     | 700     | 24pt            |
+| Body          | Pretendard     | 400     | 18pt (min 16pt) |
+| Caption       | Pretendard     | 300     | 12pt            |
+| Code          | JetBrains Mono | 400     | 13pt            |
+| Chart content | Pretendard     | 400–700 | **min 16px**    |
 
 **Fallback**: Pretendard → Apple SD Gothic Neo → Malgun Gothic → Noto Sans KR → sans-serif
 
@@ -607,31 +627,31 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 ## Slide Layout Types (23)
 
-| Layout | Purpose | Background |
-|--------|---------|------------|
-| `title` | Document title | `#FFFFFF` |
-| `executive-summary` | KPI summary | `#FFFFFF` |
-| `section-divider` | H2 section start | `#2C2C2C` |
-| `text-body` | General text | `#FFFFFF` |
-| `bullet-list` | Bullet/numbered list | `#FFFFFF` |
-| `table` | Tabular data | `#FFFFFF` |
-| `code` | Code block | `#1E1E1E` area |
-| `image` | Image-focused | `#FFFFFF` |
-| `image-text` | Image + text (60:40) | `#FFFFFF` |
-| `chart` | Data visualization | `#FFFFFF` |
-| `quote` | Blockquote | `#FFFFFF` |
-| `ai-hint` | AI Hint block | `#F5F5F5` |
-| `checklist` | Task list | `#FFFFFF` |
-| `kpi-cards` | Key metrics | `#FFFFFF` |
-| `bar-chart` | Numeric comparison | `#FFFFFF` |
-| `donut-chart` | Proportion | `#FFFFFF` |
-| `process-flow` | Sequential process | `#FFFFFF` |
-| `timeline` | Chronological | `#FFFFFF` |
-| `comparison` | Comparison (vs) | `#FFFFFF` |
-| `icon-grid` | Category listing | `#FFFFFF` |
-| `funnel` | Stage reduction | `#FFFFFF` |
-| `appendix-divider` | Appendix start | `#2C2C2C` |
-| `closing` | CTA final slide | `#FFFFFF` |
+| Layout              | Purpose              | Background     |
+| ------------------- | -------------------- | -------------- |
+| `title`             | Document title       | `#FFFFFF`      |
+| `executive-summary` | KPI summary          | `#FFFFFF`      |
+| `section-divider`   | H2 section start     | `#2C2C2C`      |
+| `text-body`         | General text         | `#FFFFFF`      |
+| `bullet-list`       | Bullet/numbered list | `#FFFFFF`      |
+| `table`             | Tabular data         | `#FFFFFF`      |
+| `code`              | Code block           | `#1E1E1E` area |
+| `image`             | Image-focused        | `#FFFFFF`      |
+| `image-text`        | Image + text (60:40) | `#FFFFFF`      |
+| `chart`             | Data visualization   | `#FFFFFF`      |
+| `quote`             | Blockquote           | `#FFFFFF`      |
+| `ai-hint`           | AI Hint block        | `#F5F5F5`      |
+| `checklist`         | Task list            | `#FFFFFF`      |
+| `kpi-cards`         | Key metrics          | `#FFFFFF`      |
+| `bar-chart`         | Numeric comparison   | `#FFFFFF`      |
+| `donut-chart`       | Proportion           | `#FFFFFF`      |
+| `process-flow`      | Sequential process   | `#FFFFFF`      |
+| `timeline`          | Chronological        | `#FFFFFF`      |
+| `comparison`        | Comparison (vs)      | `#FFFFFF`      |
+| `icon-grid`         | Category listing     | `#FFFFFF`      |
+| `funnel`            | Stage reduction      | `#FFFFFF`      |
+| `appendix-divider`  | Appendix start       | `#2C2C2C`      |
+| `closing`           | CTA final slide      | `#FFFFFF`      |
 
 ---
 
@@ -639,12 +659,12 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 > **MANDATORY for all slides without visual content.** Full details -> [references/image-generation.md](references/image-generation.md)
 
-| Target | Method |
-|--------|--------|
+| Target                 | Method                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Slides without visuals | Priority 1: Native image gen (Cursor/Antigravity) / background task (OpenCode) -> Priority 2: HTML concept + Playwright -> Priority 3: LLM image generation fallback when native path unavailable |
-| Charts/infographics | `render_chart_page()` → Playwright `.capture-root` screenshot → `trim.py` auto-crop ([capture pipeline](references/chart-capture-pipeline.md)) |
-| Diagrams/flowcharts | HTML/SVG |
-| Original MD images | Copy to `assets/`, reference via absolute path in HTML |
+| Charts/infographics    | `render_chart_page()` → Playwright `.capture-root` screenshot → `trim.py` auto-crop ([capture pipeline](references/chart-capture-pipeline.md))                                                    |
+| Diagrams/flowcharts    | HTML/SVG                                                                                                                                                                                          |
+| Original MD images     | Copy to `assets/`, reference via absolute path in HTML                                                                                                                                            |
 
 **Pipeline**: Generate PNG -> save to `{output_dir}/assets/` -> reference in HTML via `<img src="/absolute/path/...">` -> Playwright renders HTML slides to PDF with all images embedded.
 
@@ -654,24 +674,26 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 
 ## Dependencies
 
-| Dependency | Role | Required |
-|-----------|------|----------|
-| Native image gen | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
-| `task()` background gen | OpenCode image generation via background agent | OpenCode only |
-| `playwright` | HTML rendering / screenshots | **Required** (npm) |
-| `sharp` | Image post-processing | **Required** (npm) |
-| `Pillow` | Chart screenshot auto-crop (`trim.py`) | Optional (pip) |
+| Dependency              | Role                                                         | Required             |
+| ----------------------- | ------------------------------------------------------------ | -------------------- |
+| Native image gen        | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
+| `task()` background gen | OpenCode image generation via background agent               | OpenCode only        |
+| `playwright`            | HTML rendering / screenshots                                 | **Required** (npm)   |
+| `sharp`                 | Image post-processing                                        | **Required** (npm)   |
+| `Pillow`                | Chart screenshot auto-crop (`trim.py`)                       | Optional (pip)       |
 
 ---
 
 ## Validation Checklist
 
 ### Phase 0 (Input Contract)
+
 - [ ] `MaraudersMD2PPT` keyword found, `activation_status` == "ACTIVATED"
 - [ ] `pipeline_mode` == "SKILL"
 - [ ] InputContract populated (defaults if not specified)
 
 ### Phase 1 (Semantic Analysis)
+
 - [ ] Every H2 section has a SectionCard with all 12 fields
 - [ ] Every SectionCard has role, claim, insight, must_keep
 - [ ] confidence >= 0.5 for all kept sections (re-analyze if below)
@@ -681,6 +703,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 - [ ] Paragraph preservation: all paragraphs -> keyword bullets
 
 ### Phase 2 (Narrative Architecture)
+
 - [ ] Story arc determined and slides ordered by narrative role
 - [ ] Every slide has exactly one role from 7-role taxonomy
 - [ ] Cut list has reason + destination for every cut section
@@ -692,6 +715,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 - [ ] MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX, SHORT-SECTION-MERGE applied
 
 ### Phase 3 (Visual Blueprint)
+
 - [ ] Every slide has VisualBlueprint (eye_flow, composition, image_strategy)
 - [ ] Deck Rhythm validated (density variation, mood arc)
 - [ ] Visual Intent -> Layout Recipe mapping applied
@@ -700,6 +724,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 - [ ] Pre-attentive attribute (color, size, position) used for primary focus element
 
 ### Phase 4 (Rendering)
+
 - [ ] Image priority respected: Original MD -> HTML code -> LLM gen
 - [ ] Image Manifest populated and cached
 - [ ] 0% text-only content slides
@@ -707,6 +732,7 @@ Final slide: key message + 2–3 Next Steps + contact/links.
 - [ ] SVG used for: donut arcs, sparklines, arrow connectors, crisp icons
 
 ### Phase 5 (Verification)
+
 - [ ] Hard gates: text_only=0%, token_leakage=0, coverage=100%
 - [ ] Layout integrity: no overflow, no overlap, margins respected
 - [ ] Diagnostic report included in completion message
@@ -725,36 +751,36 @@ Parallel Render wave runs image generation, chart rendering, and HTML compositio
 
 ## Design System (`design/` package)
 
-| Module | Purpose |
-|--------|---------|
-| `tokens.py` | 3-tier design token dictionary (primitive/semantic/component) |
-| `vars.py` | Token path to CSS custom property name mapping |
-| `resolve.py` | ThemeResolver: deep-merge tokens + theme overrides to `:root` CSS |
-| `themes.py` | 5 theme packs |
-| `variants.py` | 23 layout types x 2-3 variants each (69 total) with CSS overrides |
-| `variant_select.py` | VariantState + rhythm-based select_variant() scoring |
-| `editorial.py` | Running headers, folios, source citations, exhibit labels, dividers |
+| Module               | Purpose                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| `tokens.py`          | 3-tier design token dictionary (primitive/semantic/component)                      |
+| `vars.py`            | Token path to CSS custom property name mapping                                     |
+| `resolve.py`         | ThemeResolver: deep-merge tokens + theme overrides to `:root` CSS                  |
+| `themes.py`          | 5 theme packs                                                                      |
+| `variants.py`        | 23 layout types x 2-3 variants each (69 total) with CSS overrides                  |
+| `variant_select.py`  | VariantState + rhythm-based select_variant() scoring                               |
+| `editorial.py`       | Running headers, folios, source citations, exhibit labels, dividers                |
 | `image_treatment.py` | 4 image treatments (crop_focus, muted_tone, readability_overlay, background_panel) |
-| `lint.py` | Static design lint (NO1-NO6 anti-AI, YES1/YES4 editorial, H1-H5 scoring) |
+| `lint.py`            | Static design lint (NO1-NO6 anti-AI, YES1/YES4 editorial, H1-H5 scoring)           |
 
 ### Anti-AI Design Rules (Enforced by Lint)
 
-| Rule | What is Blocked |
-|------|----------------|
-| NO1 | Glassmorphism, backdrop-filter, blur effects |
-| NO2 | border-radius > 4px (except donut charts) |
-| NO3 | box-shadow blur > 4px or spread > 0 |
-| NO4 | text-shadow, drop-shadow (neon/glow) |
-| NO5 | Multi-saturated-hue slides (>1 accent hue) |
-| NO6 | Dashboard UI patterns (tabs, toggles, pills, badges) |
+| Rule | What is Blocked                                      |
+| ---- | ---------------------------------------------------- |
+| NO1  | Glassmorphism, backdrop-filter, blur effects         |
+| NO2  | border-radius > 4px (except donut charts)            |
+| NO3  | box-shadow blur > 4px or spread > 0                  |
+| NO4  | text-shadow, drop-shadow (neon/glow)                 |
+| NO5  | Multi-saturated-hue slides (>1 accent hue)           |
+| NO6  | Dashboard UI patterns (tabs, toggles, pills, badges) |
 
 ---
 
 ## Future Improvements (Post v2.0)
 
-| Item | Description |
-|------|-------------|
-| CSS Custom Properties | Theme switching via CSS variables |
-| Slide Complexity Score | Auto-calculate cognitive complexity and density risk |
-| Interactive Presentation Mode | Optional branch for transitions and presenter interactions |
-| Multi-language Expansion | Language support beyond Korean/CJK with locale-aware typography |
+| Item                          | Description                                                     |
+| ----------------------------- | --------------------------------------------------------------- |
+| CSS Custom Properties         | Theme switching via CSS variables                               |
+| Slide Complexity Score        | Auto-calculate cognitive complexity and density risk            |
+| Interactive Presentation Mode | Optional branch for transitions and presenter interactions      |
+| Multi-language Expansion      | Language support beyond Korean/CJK with locale-aware typography |

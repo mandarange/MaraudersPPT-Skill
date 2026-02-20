@@ -65,12 +65,12 @@ Wave 5 — Sequential (assembly + verification)
 
 Wave 4 is the primary bottleneck. The following tasks are **fully independent** and should run concurrently:
 
-| Task | Agent/Method | Blocking? | Typical Duration |
-|------|-------------|-----------|-----------------|
-| AI Image Generation | Cursor native image gen / `task(run_in_background=true)` | No (background) | 5–15s per image |
-| Chart HTML Rendering | `render_chart(type, data)` — Python templates | No (instant) | <100ms per chart |
-| Chart Screenshots | Playwright batch — one browser, multiple pages | No (background) | 1–3s per chart |
-| Slide HTML Generation | Sequential HTML file writes | Yes (foreground) | <1s per slide |
+| Task                  | Agent/Method                                             | Blocking?        | Typical Duration |
+| --------------------- | -------------------------------------------------------- | ---------------- | ---------------- |
+| AI Image Generation   | Cursor native image gen / `task(run_in_background=true)` | No (background)  | 5–15s per image  |
+| Chart HTML Rendering  | `render_chart(type, data)` — Python templates            | No (instant)     | <100ms per chart |
+| Chart Screenshots     | Playwright batch — one browser, multiple pages           | No (background)  | 1–3s per chart   |
+| Slide HTML Generation | Sequential HTML file writes                              | Yes (foreground) | <1s per slide    |
 
 **Image Manifest Cache Check**: Before firing AI image generation, check `assets/image-manifest.json` for cache hits. Skip generation for matching `content_hash` entries (file must exist AND `file_size_bytes > 0`). Unless user explicitly requests refresh.
 
@@ -125,12 +125,14 @@ When multiple charts need screenshots, use a **single browser instance** with co
 const browser = await chromium.launch();
 const screenshots = await Promise.all(
   chartHtmls.map(async (html, i) => {
-    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-    await page.setContent(html, { waitUntil: 'networkidle' });
-    const buf = await page.screenshot({ type: 'png' });
+    const page = await browser.newPage({
+      viewport: { width: 1920, height: 1080 },
+    });
+    await page.setContent(html, { waitUntil: "networkidle" });
+    const buf = await page.screenshot({ type: "png" });
     await page.close();
     return { id: i, buffer: buf };
-  })
+  }),
 );
 await browser.close();
 
@@ -143,22 +145,22 @@ for (const html of chartHtmls) {
 
 ## Parallelization Rules
 
-| Rule | Description |
-|------|-------------|
-| **Start longest tasks first** | AI image generation takes 5–15s — always fire first |
-| **Batch Playwright ops** | One `chromium.launch()`, multiple `newPage()` calls |
-| **Never block on images** | Generate all slide HTMLs while images render in background |
-| **Collect results lazily** | Only call `background_output()` when results are actually needed (Wave 3) |
-| **Fail independently** | If one chart screenshot fails, others continue. Retry failed ones only |
-| **Resource limits** | Max 8 concurrent Playwright pages (memory constraint) |
-| **Cursor fallback** | In non-OpenCode environments, execute sequentially — no `task()` available |
+| Rule                          | Description                                                                |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| **Start longest tasks first** | AI image generation takes 5–15s — always fire first                        |
+| **Batch Playwright ops**      | One `chromium.launch()`, multiple `newPage()` calls                        |
+| **Never block on images**     | Generate all slide HTMLs while images render in background                 |
+| **Collect results lazily**    | Only call `background_output()` when results are actually needed (Wave 3)  |
+| **Fail independently**        | If one chart screenshot fails, others continue. Retry failed ones only     |
+| **Resource limits**           | Max 8 concurrent Playwright pages (memory constraint)                      |
+| **Cursor fallback**           | In non-OpenCode environments, execute sequentially — no `task()` available |
 
 ## Expected Performance Gains
 
-| Document Size | Sequential | Parallel (OpenCode) | Speedup |
-|--------------|-----------|-------------------|---------|
-| Small (<50 lines, 0 images) | ~12s | ~10s | 1.2× |
-| Medium (50–300 lines, 2–3 images) | ~40s | ~18s | 2.2× |
-| Large (300+ lines, 5+ images) | ~110s | ~32s | 3.4× |
+| Document Size                     | Sequential | Parallel (OpenCode) | Speedup |
+| --------------------------------- | ---------- | ------------------- | ------- |
+| Small (<50 lines, 0 images)       | ~12s       | ~10s                | 1.2×    |
+| Medium (50–300 lines, 2–3 images) | ~40s       | ~18s                | 2.2×    |
+| Large (300+ lines, 5+ images)     | ~110s      | ~32s                | 3.4×    |
 
 > **Note**: Speedup is primarily from overlapping AI image generation with slide HTML generation and chart rendering. Chart rendering is already fast (<100ms) and contributes minimal savings. Image Manifest cache hits further reduce Wave 4 duration.

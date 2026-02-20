@@ -1,6 +1,7 @@
 # MaraudersPPT Skill
 
-A Claude Code / Cursor Skill that automatically converts Markdown documents into presentation-quality slides (.pdf).
+A multi-platform Agent Skill (optimized for Gemini 3.1 Pro) that automatically converts Markdown documents into presentation-quality slides (.pdf).
+Fully supports execution across Cursor, Claude Code, OpenCode, and Antigravity environments.
 Preserves the original Markdown's structure, images, and data while generating a presentation-ready PDF.
 
 > **PDF is the primary presentation output** — all visual elements are designed for static rendering.
@@ -58,39 +59,39 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 
 ## Key Features
 
-| Feature | Description |
-|---------|-------------|
-| **Auto Slide Mapping** | H1 → Title, H2 → Section divider, H3 → Sub-header — structure preserved |
-| **23 Layout Types** | Dedicated layouts for text, tables, code, images, lists, KPIs, charts, timelines, etc. |
-| **Infographic Auto-Conversion** | Detects numeric, comparison, and sequential data patterns → auto-maps to 8 chart types (AGGRESSIVE mode) |
-| **Parallel Execution** | 6-wave parallel pipeline — AI image gen, chart rendering, and slide HTML gen run concurrently |
-| **Executive Summary** | Auto-generates a key KPI summary slide right after the title for decks with 10+ slides |
-| **CTA Closing** | Final slide with key message + Next Steps + contact info |
-| **AI Hint Special Handling** | `[AI RULE]`, `[AI DECISION]`, `[AI NOTE]`, `[AI CONTEXT]` highlighted slides |
-| **Design Token System** | 3-tier token architecture (primitive/semantic/component) with CSS custom properties and theme resolution |
-| **5 Theme Packs** | consulting_minimal, modern_editorial, product_pitch, dark_executive, academic_clean |
-| **Layout Rhythm Engine** | 69 layout variants (23 types × 3) with scoring algorithm that prevents visual monotony |
-| **Editorial Details** | Running headers, folios, source citations, exhibit labels, dividers — consulting-grade paratextual elements |
-| **Human-Likeness Scoring** | Automated H-score (0.0–1.0) across 5 dimensions with 0.80 pass threshold |
-| **Anti-AI Design Lint** | NO1–NO6 rules block glassmorphism, large radius, deep shadows, neon glow, multi-hue, dashboard UI |
-| **Chart Annotations** | Insight captions and callout overlays for data-driven storytelling on chart slides |
-| **Anti-Vibe-Coding Design** | No rounded cards, no gray backgrounds, no AI dashboard aesthetics — McKinsey/BCG quality |
-| **16px Minimum Font** | All chart/infographic content text ≥ 16px (exceptions: slide numbers 10pt, captions 12pt) |
-| **Mandatory Original Images** | All `![alt](path)` images from the MD file are inserted into slides (never omitted) |
-| **AI Image Generation** | Auto-generates photorealistic content images via Cursor native image gen / OpenCode background tasks |
-| **Persistent Image Reuse** | Generated images are cached per page key and reused across reruns unless user explicitly requests refresh |
-| **Layout Integrity** | Auto-validates overflow/overlap/margin violations + up to 3 regeneration attempts |
-| **Slide Flow Optimization** | MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX rules applied |
-| **Version Control** | Each generation outputs `v{M}.{m}_filename.pdf` |
-| **Low-Token File Pipeline** | Intermediate JSON artifacts are written to disk (`.pipeline/`) to avoid large stdin/stdout payloads |
-| **Cross-Platform** | Works on macOS, Windows, and Linux — no OS-specific dependencies |
-| **Korean/CJK Full Support** | Pretendard font-based with full fallback chain (Apple SD Gothic Neo → Malgun Gothic → Noto Sans KR) |
-| **Input Contract** | Audience, goal, and time constraints captured upfront for targeted content generation |
-| **Section Cards** | Semantic analysis of content structure with visual blueprint mapping |
-| **7-Role Narrative Taxonomy** | Structured narrative roles (Context, Problem, Solution, Evidence, Impact, Action, Closing) |
-| **Visual Blueprint** | Pre-generation layout planning with role-to-slide mapping |
-| **Dual Output** | Generates both presentation deck and detailed appendix for comprehensive coverage |
-| **Image Manifest** | Cache system for generated images with reuse tracking and refresh control |
+| Feature                         | Description                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Auto Slide Mapping**          | H1 → Title, H2 → Section divider, H3 → Sub-header — structure preserved                                     |
+| **23 Layout Types**             | Dedicated layouts for text, tables, code, images, lists, KPIs, charts, timelines, etc.                      |
+| **Infographic Auto-Conversion** | Detects numeric, comparison, and sequential data patterns → auto-maps to 8 chart types (AGGRESSIVE mode)    |
+| **Parallel Execution**          | 6-wave parallel pipeline — AI image gen, chart rendering, and slide HTML gen run concurrently               |
+| **Executive Summary**           | Auto-generates a key KPI summary slide right after the title for decks with 10+ slides                      |
+| **CTA Closing**                 | Final slide with key message + Next Steps + contact info                                                    |
+| **AI Hint Special Handling**    | `[AI RULE]`, `[AI DECISION]`, `[AI NOTE]`, `[AI CONTEXT]` highlighted slides                                |
+| **Design Token System**         | 3-tier token architecture (primitive/semantic/component) with CSS custom properties and theme resolution    |
+| **5 Theme Packs**               | consulting_minimal, modern_editorial, product_pitch, dark_executive, academic_clean                         |
+| **Layout Rhythm Engine**        | 69 layout variants (23 types × 3) with scoring algorithm that prevents visual monotony                      |
+| **Editorial Details**           | Running headers, folios, source citations, exhibit labels, dividers — consulting-grade paratextual elements |
+| **Human-Likeness Scoring**      | Automated H-score (0.0–1.0) across 5 dimensions with 0.80 pass threshold                                    |
+| **Anti-AI Design Lint**         | NO1–NO6 rules block glassmorphism, large radius, deep shadows, neon glow, multi-hue, dashboard UI           |
+| **Chart Annotations**           | Insight captions and callout overlays for data-driven storytelling on chart slides                          |
+| **Anti-Vibe-Coding Design**     | No rounded cards, no gray backgrounds, no AI dashboard aesthetics — McKinsey/BCG quality                    |
+| **16px Minimum Font**           | All chart/infographic content text ≥ 16px (exceptions: slide numbers 10pt, captions 12pt)                   |
+| **Mandatory Original Images**   | All `![alt](path)` images from the MD file are inserted into slides (never omitted)                         |
+| **AI Image Generation**         | Auto-generates photorealistic content images via Cursor native image gen / OpenCode background tasks        |
+| **Persistent Image Reuse**      | Generated images are cached per page key and reused across reruns unless user explicitly requests refresh   |
+| **Layout Integrity**            | Auto-validates overflow/overlap/margin violations + up to 3 regeneration attempts                           |
+| **Slide Flow Optimization**     | MAX-2-TEXT, FRONT-VISUAL, AUTO-APPENDIX rules applied                                                       |
+| **Version Control**             | Each generation outputs `v{M}.{m}_filename.pdf`                                                             |
+| **Low-Token File Pipeline**     | Intermediate JSON artifacts are written to disk (`.pipeline/`) to avoid large stdin/stdout payloads         |
+| **Cross-Platform**              | Works on macOS, Windows, and Linux — no OS-specific dependencies                                            |
+| **Korean/CJK Full Support**     | Pretendard font-based with full fallback chain (Apple SD Gothic Neo → Malgun Gothic → Noto Sans KR)         |
+| **Input Contract**              | Audience, goal, and time constraints captured upfront for targeted content generation                       |
+| **Section Cards**               | Semantic analysis of content structure with visual blueprint mapping                                        |
+| **7-Role Narrative Taxonomy**   | Structured narrative roles (Context, Problem, Solution, Evidence, Impact, Action, Closing)                  |
+| **Visual Blueprint**            | Pre-generation layout planning with role-to-slide mapping                                                   |
+| **Dual Output**                 | Generates both presentation deck and detailed appendix for comprehensive coverage                           |
+| **Image Manifest**              | Cache system for generated images with reuse tracking and refresh control                                   |
 
 ---
 
@@ -116,16 +117,20 @@ Without the `MaraudersMD2PPT` keyword, requests like "Make this into a PPT" or "
 
 ---
 
-## IDE Environment Behavior
+## Execution Environments (Optimized for Gemini 3.1 Pro)
 
-| Environment | AI Image Generation | PDF Rendering | Model Switching |
-|-------------|-------------------|---------------|-----------------|
-| **Cursor 2.4+ / Antigravity** | Native image gen (built-in agent tool) | Playwright-based renderer | **Not required** |
-| **OpenCode** | Background task via `task()` | Playwright-based renderer | **Not required** |
+This skill is heavily optimized for **Gemini 3.1 Pro**, ensuring accurate YAML parsing, reliable layout integrity, and zero token leakage.
 
-- **Cursor / Antigravity**: Uses built-in image generation agent tool (powered by Nano Banana Pro) — no model switch needed
-- **OpenCode**: Image generation runs as a background task via `task(run_in_background=true)`
-- **All environments**: Pipeline proceeds immediately with zero confirmation prompts
+| Environment                   | AI Image Generation                    | PDF Rendering             |
+| ----------------------------- | -------------------------------------- | ------------------------- |
+| **Cursor**                    | Native image gen (built-in agent tool) | Playwright-based renderer |
+| **Claude Code**               | Standard Markdown-to-PDF generation    | Playwright-based renderer |
+| **OpenCode**                  | Background task via `task()`           | Playwright-based renderer |
+| **Antigravity**               | Native image gen (built-in agent tool) | Playwright-based renderer |
+
+- **Cursor / Antigravity**: Uses built-in image generation agent tool — no model switch needed.
+- **OpenCode**: Image generation runs as a background task via `task(run_in_background=true)`.
+- **All environments**: Pipeline proceeds immediately with zero confirmation prompts.
 
 ---
 
@@ -149,15 +154,15 @@ docs/
 
 Every generated image is recorded in `assets/image-manifest.json`:
 
-| Field | Purpose |
-|-------|---------|
-| `type` | `ai-generated` / `chart` / `original-md` / `html-concept` |
-| `prompt` | Exact prompt used to generate AI images (reproducibility) |
-| `generator` | Tool that produced the image (`cursor-native`, `playwright-chart`, …) |
-| `visual_intent` | Layout role the image fulfills |
-| `content_hash` | Cache key for AI images (skip regeneration on match) |
-| `data_hash` | Cache key for charts |
-| `file_size_bytes` | Integrity check (0 = stale, triggers regeneration) |
+| Field             | Purpose                                                               |
+| ----------------- | --------------------------------------------------------------------- |
+| `type`            | `ai-generated` / `chart` / `original-md` / `html-concept`             |
+| `prompt`          | Exact prompt used to generate AI images (reproducibility)             |
+| `generator`       | Tool that produced the image (`cursor-native`, `playwright-chart`, …) |
+| `visual_intent`   | Layout role the image fulfills                                        |
+| `content_hash`    | Cache key for AI images (skip regeneration on match)                  |
+| `data_hash`       | Cache key for charts                                                  |
+| `file_size_bytes` | Integrity check (0 = stale, triggers regeneration)                    |
 
 - Same hash on re-run → reuse existing image, no regeneration
 - Explicit refresh: `--refresh=all`, `--refresh=slide:7`, `--refresh=type:ai-generated`
@@ -185,27 +190,27 @@ html = render_chart("bar_chart", [
 ])
 ```
 
-| Type | Purpose |
-|------|---------|
-| `kpi_cards` | Compare 1–4 key performance indicators |
-| `bar_chart` | Numeric comparison across items |
-| `donut_chart` | Proportion/share visualization |
-| `process_flow` | Step-based pipeline (3–8 steps) |
-| `timeline` | Release roadmap/milestones |
-| `comparison` | Side-by-side contrast (Before/After) |
-| `icon_grid` | Non-numeric item classification (2x2, 2x3, 3x2) |
-| `funnel` | Stage-based drop-off pipeline |
+| Type           | Purpose                                         |
+| -------------- | ----------------------------------------------- |
+| `kpi_cards`    | Compare 1–4 key performance indicators          |
+| `bar_chart`    | Numeric comparison across items                 |
+| `donut_chart`  | Proportion/share visualization                  |
+| `process_flow` | Step-based pipeline (3–8 steps)                 |
+| `timeline`     | Release roadmap/milestones                      |
+| `comparison`   | Side-by-side contrast (Before/After)            |
+| `icon_grid`    | Non-numeric item classification (2x2, 2x3, 3x2) |
+| `funnel`       | Stage-based drop-off pipeline                   |
 
 ---
 
 ## Dependencies
 
-| Package | Role | Required |
-|---------|------|:--------:|
-| `playwright` | HTML rendering / PDF generation / chart screenshots | **Required** |
-| `sharp` | Image post-processing (rasterization) | **Required** |
-| Native image gen | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
-| `task()` background gen | OpenCode image generation via background agent | OpenCode only |
+| Package                 | Role                                                         |       Required       |
+| ----------------------- | ------------------------------------------------------------ | :------------------: |
+| `playwright`            | HTML rendering / PDF generation / chart screenshots          |     **Required**     |
+| `sharp`                 | Image post-processing (rasterization)                        |     **Required**     |
+| Native image gen        | Built-in agent tool — Cursor / Antigravity (Nano Banana Pro) | Cursor / Antigravity |
+| `task()` background gen | OpenCode image generation via background agent               |    OpenCode only     |
 
 ---
 
@@ -261,25 +266,25 @@ MaraudersPPT-Skill/
 
 ## Documentation
 
-| Document | Contents |
-|----------|----------|
-| [`SKILL.md`](./SKILL.md) | Skill workflow (Phases 0-5 + 1.5), 23 layouts, design system integration, validation checklist |
-| [`docs/design-spec.md`](./docs/design-spec.md) | Color palette, typography, 8px grid, layout specs, tokens, themes, variants, editorial |
-| [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Product requirements, conversion rules, architecture, acceptance criteria |
+| Document                                                         | Contents                                                                                       |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`SKILL.md`](./SKILL.md)                                         | Skill workflow (Phases 0-5 + 1.5), 23 layouts, design system integration, validation checklist |
+| [`docs/design-spec.md`](./docs/design-spec.md)                   | Color palette, typography, 8px grid, layout specs, tokens, themes, variants, editorial         |
+| [`docs/prd-md-to-pptx-skill.md`](./docs/prd-md-to-pptx-skill.md) | Product requirements, conversion rules, architecture, acceptance criteria                      |
 
 ### Reference Docs (`references/`)
 
-| Document | Contents |
-|----------|----------|
-| [`insight-extraction.md`](./references/insight-extraction.md) | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm |
-| [`content-distillation.md`](./references/content-distillation.md) | Slide text limits, bullet rules, distillation algorithm |
-| [`image-generation.md`](./references/image-generation.md) | 3-priority image system, Image Manifest cache, prompt derivation |
-| [`layout-integrity.md`](./references/layout-integrity.md) | Safe areas, font metrics, overflow verification checklist |
-| [`parallel-execution.md`](./references/parallel-execution.md) | 6-wave pipeline architecture, parallel render strategy |
-| [`design-system.md`](./references/design-system.md) | Token/theme/variant architecture, editorial details, lint rules |
-| [`visual-qa.md`](./references/visual-qa.md) | Post-generation visual inspection + automated design lint + H-score |
-| [`cognitive-layout.md`](./references/cognitive-layout.md) | Eye-tracking patterns, Gestalt principles, McKinsey/BCG layout rules |
-| [`svg-components.md`](./references/svg-components.md) | Inline SVG patterns for charts, shapes, diagrams in HTML→PDF pipeline |
+| Document                                                          | Contents                                                                         |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [`insight-extraction.md`](./references/insight-extraction.md)     | Section Card schema, 5 analytical roles, 7 narrative roles, extraction algorithm |
+| [`content-distillation.md`](./references/content-distillation.md) | Slide text limits, bullet rules, distillation algorithm                          |
+| [`image-generation.md`](./references/image-generation.md)         | 3-priority image system, Image Manifest cache, prompt derivation                 |
+| [`layout-integrity.md`](./references/layout-integrity.md)         | Safe areas, font metrics, overflow verification checklist                        |
+| [`parallel-execution.md`](./references/parallel-execution.md)     | 6-wave pipeline architecture, parallel render strategy                           |
+| [`design-system.md`](./references/design-system.md)               | Token/theme/variant architecture, editorial details, lint rules                  |
+| [`visual-qa.md`](./references/visual-qa.md)                       | Post-generation visual inspection + automated design lint + H-score              |
+| [`cognitive-layout.md`](./references/cognitive-layout.md)         | Eye-tracking patterns, Gestalt principles, McKinsey/BCG layout rules             |
+| [`svg-components.md`](./references/svg-components.md)             | Inline SVG patterns for charts, shapes, diagrams in HTML→PDF pipeline            |
 
 ---
 
@@ -303,24 +308,24 @@ assert score["pass"], f"H-score {score['overall']:.2f} < 0.80"
 
 ### Themes
 
-| Theme | Accent | Character |
-|-------|--------|-----------|
-| `consulting_minimal` | Navy #003087 | McKinsey/BCG corporate clarity |
-| `modern_editorial` | Red #C41E3A | Magazine-style editorial polish |
-| `product_pitch` | Cobalt #1B4FD8 | Modern SaaS/startup energy |
-| `dark_executive` | Steel #8A94A6 | Premium dark-mode for high-stakes |
-| `academic_clean` | Burgundy #8B0000 | Scholarly restraint |
+| Theme                | Accent           | Character                         |
+| -------------------- | ---------------- | --------------------------------- |
+| `consulting_minimal` | Navy #003087     | McKinsey/BCG corporate clarity    |
+| `modern_editorial`   | Red #C41E3A      | Magazine-style editorial polish   |
+| `product_pitch`      | Cobalt #1B4FD8   | Modern SaaS/startup energy        |
+| `dark_executive`     | Steel #8A94A6    | Premium dark-mode for high-stakes |
+| `academic_clean`     | Burgundy #8B0000 | Scholarly restraint               |
 
 ### Anti-AI Design Lint
 
-| Rule | Blocks |
-|------|--------|
-| NO1 | Glassmorphism, backdrop-filter, blur |
-| NO2 | border-radius > 4px |
-| NO3 | box-shadow blur > 4px |
-| NO4 | text-shadow, drop-shadow |
-| NO5 | Multiple saturated hues per slide |
-| NO6 | Dashboard UI (tabs, toggles, pills) |
+| Rule | Blocks                               |
+| ---- | ------------------------------------ |
+| NO1  | Glassmorphism, backdrop-filter, blur |
+| NO2  | border-radius > 4px                  |
+| NO3  | box-shadow blur > 4px                |
+| NO4  | text-shadow, drop-shadow             |
+| NO5  | Multiple saturated hues per slide    |
+| NO6  | Dashboard UI (tabs, toggles, pills)  |
 
 ---
 
